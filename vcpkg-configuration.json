@@ -9,7 +9,7 @@
     {
       "kind": "git",
       "repository": "https://github.com/honeybunch/toybox-vcpkg-registry",
-      "baseline": "54682ce613c83c658fc432711058f68c7816b57a",
+      "baseline": "9731e643598c9355dfe8cbc8ece718890d16b31b",
       "packages": [
         "toybox"
       ]

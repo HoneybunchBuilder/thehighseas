@@ -1,0 +1,69 @@
+name: Windows
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        toolsets: [
+          {host: [Windows, X64, self-hosted], preset: x64-windows-ninja-llvm},
+          {host: [Windows, X64, self-hosted], preset: x64-windows-static-ninja-llvm},
+          {host: [Windows, X64, self-hosted], preset: x64-mingw-ninja-gcc},
+          {host: [Windows, X64, self-hosted], preset: x64-mingw-static-ninja-gcc},
+          {host: [Windows, X64, self-hosted], preset: x64-windows-vs2022-llvm},
+          {host: [Windows, X64, self-hosted], preset: x64-windows-static-vs2022-llvm},
+        ]
+
+    name: ${{matrix.toolsets.preset}} on ${{matrix.toolsets.host[0]}}
+    runs-on: ${{matrix.toolsets.host}}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure
+      run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF
+
+    - name: Build Debug
+      run: cmake --build --preset debug-${{matrix.toolsets.preset}}
+
+    - name: Build RelWithDebInfo
+      run: cmake --build --preset relwithdebinfo-${{matrix.toolsets.preset}}
+
+    - name: Build Release
+      run: cmake --build --preset release-${{matrix.toolsets.preset}}
+
+  #deploy:
+  #  needs: build
+  #  name: Deploy
+  #  runs-on: [Windows, X64, self-hosted]
+  #  steps:
+  #  - uses: actions/checkout@v2
+  #    with:
+  #      lfs: true
+  #  - uses: actions/checkout@v2
+  #  - name: Pull LFS
+  #    run: git lfs pull
+  #  - name: Configure
+  #    run: cmake --preset x64-windows-ninja-llvm -DFINAL=ON -DPROFILE_TRACY=OFF
+  #  - name: Build Release
+  #    run: cmake --build --preset release-x64-windows-ninja-llvm
+  #  - uses: game-ci/steam-deploy@v1
+  #    with:
+  #      username: ${{ secrets.STEAM_USERNAME }}
+  #      password: ${{ secrets.STEAM_PASSWORD }}
+  #      configVdf: ${{ secrets.STEAM_CONFIG_VDF}}
+  #      ssfnFileName: ${{ secrets.STEAM_SSFN_FILE_NAME }}
+  #      ssfnFileContents: ${{ secrets.STEAM_SSFN_FILE_CONTENTS }}
+  #      appId: 2213960
+  #      buildDescription: v0.1.0
+  #      rootPath: build/x64/windows
+  #      depot1Path: Release
+  #      releaseBranch: prerelease

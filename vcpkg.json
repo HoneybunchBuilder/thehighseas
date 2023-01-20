@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "thehighseas",
+  "version": "0.1.0",
+  "dependencies": [
+    "toybox",
+    {
+      "name": "meshoptimizer",
+      "host": true,
+      "features": [
+        "gltfpack"
+      ]
+    },
+    {
+      "name": "ktx",
+      "host": true,
+      "features": [
+        "vulkan",
+        "tools"
+      ]
+    }
+  ]
+}

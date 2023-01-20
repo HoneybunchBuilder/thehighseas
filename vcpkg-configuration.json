@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg-configuration.schema.json",
+  "default-registry": {
+    "kind": "git",
+    "repository": "https://github.com/Microsoft/vcpkg",
+    "baseline": "c4294eab36c8fa2e94b5b14d9f708309ddb207f4"
+  },
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/honeybunch/toybox-vcpkg-registry",
+      "baseline": "54682ce613c83c658fc432711058f68c7816b57a",
+      "packages": [
+        "toybox"
+      ]
+    }
+  ]
+}

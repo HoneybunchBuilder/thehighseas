@@ -4,15 +4,5 @@
     "kind": "git",
     "repository": "https://github.com/Microsoft/vcpkg",
     "baseline": "c4294eab36c8fa2e94b5b14d9f708309ddb207f4"
-  },
-  "registries": [
-    {
-      "kind": "git",
-      "repository": "https://github.com/honeybunch/toybox-vcpkg-registry",
-      "baseline": "9731e643598c9355dfe8cbc8ece718890d16b31b",
-      "packages": [
-        "toybox"
-      ]
-    }
-  ]
+  }
 }

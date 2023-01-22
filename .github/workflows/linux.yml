@@ -26,8 +26,13 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: HoneybunchBuilder/toybox
-        path: .
-        ref: HEAD
+        path: 'toybox'
+        lfs: 'true'
+
+    - name: Clone TheHighSeas
+      uses: actions/checkout@v3
+      with:
+        lfs: 'true'
 
     - name: Clone TheHighSeas
       uses: actions/checkout@v3

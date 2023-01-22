@@ -18,7 +18,7 @@
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_RC_COMPILER": "llvm-rc",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -38,7 +38,7 @@
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_RC_COMPILER": "llvm-rc",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -57,7 +57,7 @@
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -76,7 +76,7 @@
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -101,7 +101,7 @@
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-windows",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -126,7 +126,7 @@
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-windows-static",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -145,7 +145,7 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -164,7 +164,7 @@
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -183,7 +183,7 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -202,7 +202,7 @@
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -222,7 +222,7 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -242,7 +242,7 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",
@@ -262,7 +262,7 @@
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
+        "TB_SOURCE_PATH": "../toybox"
       },
       "condition": {
         "type": "equals",

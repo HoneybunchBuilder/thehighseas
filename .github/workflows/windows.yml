@@ -39,7 +39,7 @@ jobs:
         lfs: 'true'
 
     - name: Configure
-      run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF -TB_SOURCE_PATH=./toybox
+      run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF -DTB_SOURCE_PATH=./toybox
 
     - name: Build Debug
       run: cmake --build --preset debug-${{matrix.toolsets.preset}}

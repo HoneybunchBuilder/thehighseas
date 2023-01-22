@@ -2,7 +2,12 @@ cmake_minimum_required(VERSION 3.20)
 
 option(TB_BUILD_SAMPLES "" OFF)
 
-include(../toybox/CMakeLists.txt)
+if(NOT TB_SOURCE_PATH)
+  message(FATAL_ERROR "Please specify TB_SOURCE_PATH as a source path to the toybox engine")
+endif()
+
+
+include(${TB_SOURCE_PATH})
 
 # Determine version from the vcpkg json manifest
 file(READ vcpkg.json VCPKG_MANIFEST)

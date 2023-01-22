@@ -17,7 +17,8 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_RC_COMPILER": "llvm-rc",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -36,7 +37,8 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_RC_COMPILER": "llvm-rc",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -54,7 +56,8 @@
         "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -72,7 +75,8 @@
         "VCPKG_TARGET_TRIPLET": "x64-mingw-static",
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -96,7 +100,8 @@
       },
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-windows",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -120,7 +125,8 @@
       },
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-windows-static",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -138,7 +144,8 @@
         "VCPKG_TARGET_TRIPLET": "x64-linux",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -156,7 +163,8 @@
         "VCPKG_TARGET_TRIPLET": "x64-linux",
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -174,7 +182,8 @@
         "VCPKG_TARGET_TRIPLET": "arm64-linux",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -192,7 +201,8 @@
         "VCPKG_TARGET_TRIPLET": "arm64-linux",
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -211,7 +221,8 @@
         "CMAKE_OSX_ARCHITECTURES": "arm64",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -230,7 +241,8 @@
         "CMAKE_OSX_ARCHITECTURES": "arm64",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",
@@ -249,7 +261,8 @@
         "CMAKE_OSX_ARCHITECTURES": "arm64",
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "TB_SOURCE_PATH": "../toybox/CMakeLists.txt"
       },
       "condition": {
         "type": "equals",

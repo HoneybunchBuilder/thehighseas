@@ -26,10 +26,18 @@ jobs:
     runs-on: ${{matrix.toolsets.host}}
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Clone Toybox
+      uses: actions/checkout@v3
+      with:
+        repository: supercharge/docs
+        path: ./toybox
+        ref: HEAD
+
+    - name: Clone TheHighSeas
+      uses: actions/checkout@v3
 
     - name: Configure
-      run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF
+      run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF -TB_SOURCE_PATH=./toybox
 
     - name: Build Debug
       run: cmake --build --preset debug-${{matrix.toolsets.preset}}

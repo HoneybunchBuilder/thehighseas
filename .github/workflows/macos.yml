@@ -23,16 +23,16 @@ jobs:
     runs-on: ${{matrix.toolsets.host}}
 
     steps:
+    - name: Clone TheHighSeas
+      uses: actions/checkout@v3
+      with:
+        lfs: 'true'
+
     - name: Clone Toybox
       uses: actions/checkout@v3
       with:
         repository: HoneybunchBuilder/toybox
         path: 'toybox'
-        lfs: 'true'
-
-    - name: Clone TheHighSeas
-      uses: actions/checkout@v3
-      with:
         lfs: 'true'
 
     - name: Configure

@@ -6,6 +6,7 @@ if(NOT TB_SOURCE_PATH)
   message(FATAL_ERROR "Please specify TB_SOURCE_PATH as a source path to the toybox engine")
 endif()
 
+message("Including: ${TB_SOURCE_PATH}/CMakeLists.txt")
 include(${TB_SOURCE_PATH}/CMakeLists.txt)
 
 # Determine version from the vcpkg json manifest

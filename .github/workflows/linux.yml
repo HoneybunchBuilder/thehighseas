@@ -25,7 +25,7 @@ jobs:
     - name: Clone Toybox
       uses: actions/checkout@v3
       with:
-        repository: supercharge/docs
+        repository: HoneybunchBuilder/toybox
         path: ./toybox
         ref: HEAD
 

@@ -40,6 +40,7 @@ jobs:
         path: ./toybox
 
     - name: Configure
+      working-directory: ./thehighseas
       run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF -DTB_SOURCE_PATH=../toybox
 
     - name: Build Debug

@@ -27,25 +27,27 @@ jobs:
       uses: actions/checkout@v3
       with:
         lfs: 'true'
+        path: ./thehighseas
 
     - name: Clone Toybox
       uses: actions/checkout@v3
       with:
         repository: HoneybunchBuilder/toybox
         lfs: 'true'
+        path: ./toybox
 
     - name: Configure
-      working-directory: .
+      working-directory: ./thehighseas
       run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF -DTB_SOURCE_PATH=../toybox
 
     - name: Build Debug
-      working-directory: .
+      working-directory: ./thehighseas
       run: cmake --build --preset debug-${{matrix.toolsets.preset}}
 
     - name: Build RelWithDebInfo
-      working-directory: .
+      working-directory: ./thehighseas
       run: cmake --build --preset relwithdebinfo-${{matrix.toolsets.preset}}
 
     - name: Build Release
-      working-directory: .
+      working-directory: ./thehighseas
       run: cmake --build --preset release-${{matrix.toolsets.preset}}

@@ -66,9 +66,11 @@ jobs:
         path: ./toybox
 
     - name: Configure
+      working-directory: ./thehighseas
       run: cmake --preset x64-linux-ninja-llvm -DFINAL=ON -DPROFILE_TRACY=OFF
 
     - name: Build Release
+      working-directory: ./thehighseas
       run: cmake --build --preset release-x64-linux-ninja-llvm
 
     - uses: game-ci/steam-deploy@v1
@@ -80,6 +82,6 @@ jobs:
         ssfnFileContents: ${{ secrets.STEAM_SSFN_FILE_CONTENTS }}
         appId: ${{ secrets.STEAM_APP_ID }}
         buildDescription: v0.1.0
-        rootPath: build/x64/linux-llvm
+        rootPath: thehighseas/build/x64/linux-llvm
         depot2Path: Release
         releaseBranch: prerelease

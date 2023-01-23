@@ -23,20 +23,22 @@ jobs:
     runs-on: ${{matrix.toolsets.host}}
 
     steps:
-    - name: Clone Toybox
-      uses: actions/checkout@v3
-      with:
-        repository: HoneybunchBuilder/toybox
-        path: 'toybox'
-        lfs: 'true'
-
     - name: Clone TheHighSeas
       uses: actions/checkout@v3
       with:
         lfs: 'true'
+        path: ./thehighseas
+
+    - name: Clone Toybox
+      uses: actions/checkout@v3
+      with:
+        repository: HoneybunchBuilder/toybox
+        lfs: 'true'
+        path: ./toybox
 
     - name: Configure
-      run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF -DTB_SOURCE_PATH=./toybox
+      working-directory: ./thehighseas
+      run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF
 
     - name: Build Debug
       run: cmake --build --preset debug-${{matrix.toolsets.preset}}

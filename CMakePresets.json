@@ -33,7 +33,7 @@
       "binaryDir": "${sourceDir}/build/x64/windows-static",
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x64-windows-llvm-static",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static",
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_RC_COMPILER": "llvm-rc",

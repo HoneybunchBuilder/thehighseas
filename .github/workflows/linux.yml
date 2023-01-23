@@ -36,15 +36,19 @@ jobs:
         path: ./toybox
 
     - name: Configure
+      working-directory: ./thehighseas
       run: cmake --preset ${{matrix.toolsets.preset}} -DCOOK_ASSETS=OFF
 
     - name: Build Debug
+      working-directory: ./thehighseas
       run: cmake --build --preset debug-${{matrix.toolsets.preset}}
 
     - name: Build RelWithDebInfo
+      working-directory: ./thehighseas
       run: cmake --build --preset relwithdebinfo-${{matrix.toolsets.preset}}
 
     - name: Build Release
+      working-directory: ./thehighseas
       run: cmake --build --preset release-${{matrix.toolsets.preset}}
 
   deploy:

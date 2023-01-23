@@ -61,9 +61,9 @@ jobs:
     - name: Pull LFS
       run: git lfs pull
     - name: Configure
-      run: cmake --preset x64-macos-ninja-llvm -DFINAL=ON -DPROFILE_TRACY=OFF
+      run: cmake --preset arm64-macos-ninja-llvm -DFINAL=ON -DPROFILE_TRACY=OFF
     - name: Build Release
-      run: cmake --build --preset release-x64-macos-ninja-llvm
+      run: cmake --build --preset release-arm64-macos-ninja-llvm
     - uses: game-ci/steam-deploy@v1
       with:
         username: ${{ secrets.STEAM_USERNAME }}
@@ -73,6 +73,6 @@ jobs:
         ssfnFileContents: ${{ secrets.STEAM_SSFN_FILE_CONTENTS }}
         appId: ${{ secrets.STEAM_APP_ID }}
         buildDescription: v0.1.0
-        rootPath: build/x64/macos-llvm
+        rootPath: build/arm64/macos-llvm
         depot3Path: Release
         releaseBranch: prerelease

@@ -60,16 +60,25 @@ jobs:
     name: Deploy
     runs-on: [Windows, X64, self-hosted]
     steps:
-    - uses: actions/checkout@v2
+    - name: Clone TheHighSeas
+      uses: actions/checkout@v3
       with:
-        lfs: true
-    - uses: actions/checkout@v2
-    - name: Pull LFS
-      run: git lfs pull
+        lfs: 'true'
+        path: ./thehighseas
+
+    - name: Clone Toybox
+      uses: actions/checkout@v3
+      with:
+        repository: HoneybunchBuilder/toybox
+        lfs: 'true'
+        path: ./toybox
+
     - name: Configure
       run: cmake --preset x64-windows-ninja-llvm -DFINAL=ON -DPROFILE_TRACY=OFF
+
     - name: Build Release
       run: cmake --build --preset release-x64-windows-ninja-llvm
+
     - uses: game-ci/steam-deploy@v1
       with:
         username: ${{ secrets.STEAM_USERNAME }}

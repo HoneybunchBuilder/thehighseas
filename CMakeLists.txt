@@ -27,6 +27,7 @@ option(FINAL "Compile with the intention to redistribute" OFF)
 option(PROFILE_TRACY "Compile with support for the tracy profiler" ON)
 option(COOK_ASSETS "Process assets for runtime loading" ON)
 
-file(GLOB_RECURSE source "source/*.c")
+file(GLOB_RECURSE source "source/*.c" )
 
-tb_add_app(thehighseas ${source})
+# Must pass source as a string or else it won't properly be interpreted as a list
+tb_add_app(thehighseas "${source}")

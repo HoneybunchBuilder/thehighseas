@@ -38,7 +38,8 @@
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_RC_COMPILER": "llvm-rc",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "TB_SOURCE_PATH": "../toybox"
+        "TB_SOURCE_PATH": "../toybox",
+        "PROFILE_TRACY": "OFF"
       },
       "condition": {
         "type": "equals",

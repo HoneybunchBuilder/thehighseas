@@ -1,5 +1,6 @@
 #include "boatcamerasystem.h"
 
+#include "cameracomponent.h"
 #include "inputcomponent.h"
 #include "profiling.h"
 #include "sailingcomponents.h"
@@ -72,27 +73,62 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
         tb_transform_get_parent(transform_comp);
     float3 hull_pos = hull_transform_comp->transform.position;
 
-    // Determine how far the camera wants to be from the boat
-    float3 pos_hull_diff = transform_comp->transform.position - hull_pos;
+    boat_cam->target_center = hull_pos;
 
-    float target_distance = boat_cam->target_dist;
-    if (target_distance == 0.0f) {
-      target_distance = magf3(pos_hull_diff);
+    // A target distance of 0 makes no sense; interpret as initialization
+    // and set a variety of parameters to whatever is stored on the transform
+    float target_dist = boat_cam->target_dist;
+    float3 target_center = boat_cam->target_center;
+    float3 hull_to_camera = boat_cam->target_hull_to_camera;
+
+    bool init = target_dist == 0.0f;
+    if (init) {
+      target_center = hull_pos;
+      hull_to_camera = normf3(transform_comp->transform.position - hull_pos);
     }
 
-    target_distance += input_comp->mouse.wheel[1] * boat_cam->zoom_speed;
-    target_distance =
-        clampf(target_distance, boat_cam->min_dist, boat_cam->max_dist);
+    // Move the boat along the look axis based on mouse wheel input
+    {
+      float3 pos_hull_diff = transform_comp->transform.position - hull_pos;
 
-    // Determine the unit vector that describes the direction the camera
-    // wants to be offset from the boat
-    float3 pos_to_hull = normf3(pos_hull_diff);
+      if (init) {
+        target_dist = magf3(pos_hull_diff);
+      }
+
+      target_dist += input_comp->mouse.wheel[1] * boat_cam->zoom_speed;
+      target_dist = clampf(target_dist, boat_cam->min_dist, boat_cam->max_dist);
+    }
+
+    // Arcball the camera around the boat
+    {
+      float2 look_axis = input_comp->mouse.axis;
+
+      float look_yaw = 0.0f;
+      float look_pitch = 0.0f;
+      if (input_comp->mouse.left || input_comp->mouse.right ||
+          input_comp->mouse.middle) {
+        look_yaw = look_axis[0] * delta_seconds * 5;
+        look_pitch = look_axis[1] * delta_seconds * 5;
+      };
+
+      Quaternion yaw_quat = angle_axis_to_quat((float4){0, 1, 0, look_yaw});
+      hull_to_camera = normf3(qrotf3(yaw_quat, hull_to_camera));
+      float3 right = normf3(crossf3((float3){0, 1, 0}, hull_to_camera));
+      Quaternion pitch_quat = angle_axis_to_quat(f3tof4(right, look_pitch));
+      hull_to_camera = normf3(qrotf3(pitch_quat, hull_to_camera));
+    }
+
+    boat_cam->target_dist = target_dist;
+    boat_cam->target_center = target_center;
+    boat_cam->target_hull_to_camera = hull_to_camera;
 
     transform_comp->transform.position =
-        lerpf3(transform_comp->transform.position,
-               pos_to_hull * target_distance, delta_seconds);
+        target_center + (hull_to_camera * target_dist);
 
-    boat_cam->target_dist = target_distance;
+    // Make sure the camera looks at the hull
+    transform_comp->transform.rotation =
+        look_at_quat(hull_pos, transform_comp->transform.position,
+                     (float3){0.0f, 1.0f, 0.0f});
   }
 
   (void)input_store;
@@ -125,7 +161,9 @@ void tb_boat_camera_system_descriptor(
       .id = BoatCameraSystemId,
       .desc = (InternalDescriptor)cam_desc,
       .dep_count = 2,
-      .deps[0] = {2, {TransformComponentId, BoatCameraComponentId}},
+      .deps[0] = {3,
+                  {TransformComponentId, BoatCameraComponentId,
+                   CameraComponentId}},
       .deps[1] = {1, {InputComponentId}},
       .create = tb_create_boat_camera_system,
       .destroy = tb_destroy_boat_camera_system,

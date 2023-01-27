@@ -69,9 +69,9 @@ typedef struct BoatCameraComponent {
   float zoom_speed;
   float pitch_limit;
 
-  float3 offset_dir;
-  float3 target_offset_dir;
+  float3 target_center;
   float target_dist;
+  float3 target_hull_to_camera;
 } BoatCameraComponent;
 
 typedef struct ComponentDescriptor ComponentDescriptor;

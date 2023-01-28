@@ -86,6 +86,6 @@ jobs:
         ssfnFileContents: ${{ secrets.STEAM_SSFN_FILE_CONTENTS }}
         appId: ${{ secrets.STEAM_APP_ID }}
         buildDescription: v0.1.0
-        rootPath: build/x64/linux-llvm
+        rootPath: thehighseas/build/x64/linux-llvm
         depot2Path: Release
         releaseBranch: prerelease

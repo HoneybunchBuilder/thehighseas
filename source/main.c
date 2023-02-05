@@ -27,6 +27,7 @@
 #include "transformcomponent.h"
 
 #include "boatcamerasystem.h"
+#include "boatmovementsystem.h"
 #include "camerasystem.h"
 #include "coreuisystem.h"
 #include "imguisystem.h"
@@ -223,8 +224,12 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
       .tmp_alloc = arena.alloc,
   };
 
+  BoatMovementSystemDescriptor boat_mov_system_desc = {
+      .tmp_alloc = arena.alloc,
+  };
+
 // Order doesn't matter here
-#define SYSTEM_COUNT 19
+#define SYSTEM_COUNT 20
   SystemDescriptor system_descs[SYSTEM_COUNT] = {0};
   {
     uint32_t i = 0;
@@ -251,6 +256,8 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     tb_time_of_day_system_descriptor(&system_descs[i++], &tod_system_desc);
     tb_visual_logging_system_descriptor(&system_descs[i++], &vlog_system_desc);
     tb_boat_camera_system_descriptor(&system_descs[i++], &boat_cam_system_desc);
+    tb_boat_movement_system_descriptor(&system_descs[i++],
+                                       &boat_mov_system_desc);
     TB_CHECK(i == SYSTEM_COUNT, "Incorrect number of systems");
   }
 
@@ -273,6 +280,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     init_order[i++] = OceanSystemId;
     init_order[i++] = CameraSystemId;
     init_order[i++] = BoatCameraSystemId;
+    init_order[i++] = BoatMovementSystemId;
     init_order[i++] = ImGuiSystemId;
     init_order[i++] = NoClipControllerSystemId;
     init_order[i++] = CoreUISystemId;
@@ -286,6 +294,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     tick_order[i++] = InputSystemId;
     tick_order[i++] = NoClipControllerSystemId;
     tick_order[i++] = BoatCameraSystemId;
+    tick_order[i++] = BoatMovementSystemId;
     tick_order[i++] = CoreUISystemId;
     tick_order[i++] = CameraSystemId;
     tick_order[i++] = ShadowSystemId;

@@ -2,7 +2,7 @@
 
 #include "allocator.h"
 
-#define BoatCameraSystemId 0xDEADF000
+#define BoatCameraSystemId 0xDEADF004
 
 typedef struct SystemDescriptor SystemDescriptor;
 

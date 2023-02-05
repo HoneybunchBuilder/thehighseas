@@ -45,6 +45,26 @@ void destroy_boat_movement_component(BoatMovementComponent *comp,
   *comp = (BoatMovementComponent){.bouyancy = 0};
 }
 
+bool deserialize_boat_movement_component(json_object *json, void *out_desc) {
+  BoatMovementComponentDesc *desc = (BoatMovementComponentDesc *)out_desc;
+  json_object_object_foreach(json, key, value) {
+    if (SDL_strcmp(key, "bouyancy") == 0) {
+      desc->bouyancy = (float)json_object_get_double(value);
+    } else if (SDL_strcmp(key, "heading_change_speed") == 0) {
+      desc->heading_change_speed = (float)json_object_get_double(value);
+    } else if (SDL_strcmp(key, "max_acceleration") == 0) {
+      desc->max_acceleration = (float)json_object_get_double(value);
+    } else if (SDL_strcmp(key, "max_speed") == 0) {
+      desc->max_speed = (float)json_object_get_double(value);
+    } else if (SDL_strcmp(key, "inertia") == 0) {
+      desc->inertia = (float)json_object_get_double(value);
+    } else if (SDL_strcmp(key, "friction") == 0) {
+      desc->friction = (float)json_object_get_double(value);
+    }
+  }
+  return true;
+}
+
 bool create_mast_component(MastComponent *comp, const MastComponent *desc,
                            uint32_t system_dep_count,
                            System *const *system_deps) {
@@ -114,6 +134,7 @@ void tb_wind_component_descriptor(ComponentDescriptor *desc) {
       .name = "Wind",
       .size = sizeof(WindComponent),
       .id = WindComponentId,
+      .id_str = WindComponentIdStr,
       .create = tb_create_wind_component,
       .destroy = tb_destroy_wind_component,
   };
@@ -124,8 +145,10 @@ void tb_boat_movement_component_descriptor(ComponentDescriptor *desc) {
       .name = "BoatMovement",
       .size = sizeof(BoatMovementComponent),
       .id = BoatMovementComponentId,
+      .id_str = BoatMovementComponentIdStr,
       .create = tb_create_boat_movement_component,
       .destroy = tb_destroy_boat_movement_component,
+      .deserialize = deserialize_boat_movement_component,
   };
 }
 
@@ -134,6 +157,7 @@ void tb_mast_component_descriptor(ComponentDescriptor *desc) {
       .name = "Mast",
       .size = sizeof(MastComponent),
       .id = MastComponentId,
+      .id_str = MastComponentIdStr,
       .create = tb_create_mast_component,
       .destroy = tb_destroy_mast_component,
   };

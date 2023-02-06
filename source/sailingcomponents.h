@@ -6,10 +6,12 @@
 #define WindComponentIdStr "0xDEAD0000"
 #define BoatMovementComponentId 0xDEAD0001
 #define BoatMovementComponentIdStr "0xDEAD0001"
-#define MastComponentId 0xDEAD0002
-#define MastComponentIdStr "0xDEAD0002"
-#define BoatCameraComponentId 0xDEAD0003
-#define BoatCameraComponentIdStr "0xDEAD0003"
+#define HullComponentId 0xDEAD0002
+#define HullComponentIdStr "0xDEAD0002"
+#define MastComponentId 0xDEAD0003
+#define MastComponentIdStr "0xDEAD0003"
+#define BoatCameraComponentId 0xDEAD0004
+#define BoatCameraComponentIdStr "0xDEAD0004"
 
 // Tracks the state of the wind
 // Currently this is intended to mostly be a single use global component
@@ -24,7 +26,6 @@ typedef struct WindComponent {
 // Both the speed and heading of the ship as well as how it rotates and bobs on
 // the waves
 typedef struct BoatMovementComponent {
-  float bouyancy; // How fast the boat will lerp to the target height
   float target_height_offset; // Target height offset to move to
 
   float heading_change_speed; // How fast the boat will face the target heading
@@ -41,13 +42,20 @@ typedef struct BoatMovementComponent {
 } BoatMovementComponent;
 
 typedef struct BoatMovementComponentDesc {
-  float bouyancy;
   float heading_change_speed;
   float max_acceleration;
   float max_speed;
   float inertia;
   float friction;
 } BoatMovementComponentDesc;
+
+typedef struct HullComponent {
+  float bouyancy; // How fast the hull will lerp to the target height
+} HullComponent;
+
+typedef struct HullComponentDesc {
+  float bouyancy;
+} HullComponentDesc;
 
 typedef struct MastComponent {
   float heading_change_speed; // How fast the mast will face the target heading
@@ -78,5 +86,6 @@ typedef struct ComponentDescriptor ComponentDescriptor;
 
 void tb_wind_component_descriptor(ComponentDescriptor *desc);
 void tb_boat_movement_component_descriptor(ComponentDescriptor *desc);
+void tb_hull_component_descriptor(ComponentDescriptor *desc);
 void tb_mast_component_descriptor(ComponentDescriptor *desc);
 void tb_boat_camera_component_descriptor(ComponentDescriptor *desc);

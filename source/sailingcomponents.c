@@ -27,7 +27,6 @@ bool create_boat_movement_component(BoatMovementComponent *comp,
   (void)system_dep_count;
   (void)system_deps;
   *comp = (BoatMovementComponent){
-      .bouyancy = desc->bouyancy,
       .heading_change_speed = desc->heading_change_speed,
       .max_acceleration = desc->max_acceleration,
       .max_speed = desc->max_speed,
@@ -42,15 +41,13 @@ void destroy_boat_movement_component(BoatMovementComponent *comp,
                                      System *const *system_deps) {
   (void)system_dep_count;
   (void)system_deps;
-  *comp = (BoatMovementComponent){.bouyancy = 0};
+  *comp = (BoatMovementComponent){0};
 }
 
 bool deserialize_boat_movement_component(json_object *json, void *out_desc) {
   BoatMovementComponentDesc *desc = (BoatMovementComponentDesc *)out_desc;
   json_object_object_foreach(json, key, value) {
-    if (SDL_strcmp(key, "bouyancy") == 0) {
-      desc->bouyancy = (float)json_object_get_double(value);
-    } else if (SDL_strcmp(key, "heading_change_speed") == 0) {
+    if (SDL_strcmp(key, "heading_change_speed") == 0) {
       desc->heading_change_speed = (float)json_object_get_double(value);
     } else if (SDL_strcmp(key, "max_acceleration") == 0) {
       desc->max_acceleration = (float)json_object_get_double(value);
@@ -60,6 +57,34 @@ bool deserialize_boat_movement_component(json_object *json, void *out_desc) {
       desc->inertia = (float)json_object_get_double(value);
     } else if (SDL_strcmp(key, "friction") == 0) {
       desc->friction = (float)json_object_get_double(value);
+    }
+  }
+  return true;
+}
+
+bool create_hull_component(HullComponent *comp, const HullComponentDesc *desc,
+                           uint32_t system_dep_count,
+                           System *const *system_deps) {
+  (void)system_dep_count;
+  (void)system_deps;
+  *comp = (HullComponent){
+      .bouyancy = desc->bouyancy,
+  };
+  return true;
+}
+
+void destroy_hull_component(HullComponent *comp, uint32_t system_dep_count,
+                            System *const *system_deps) {
+  (void)system_dep_count;
+  (void)system_deps;
+  *comp = (HullComponent){.bouyancy = 0};
+}
+
+bool deserialize_hull_component(json_object *json, void *out_desc) {
+  HullComponentDesc *desc = (HullComponentDesc *)out_desc;
+  json_object_object_foreach(json, key, value) {
+    if (SDL_strcmp(key, "bouyancy") == 0) {
+      desc->bouyancy = (float)json_object_get_double(value);
     }
   }
   return true;
@@ -126,6 +151,7 @@ void destroy_boat_camera_component(BoatCameraComponent *comp,
 TB_DEFINE_COMPONENT(wind, WindComponent, WindComponent)
 TB_DEFINE_COMPONENT(boat_movement, BoatMovementComponent,
                     BoatMovementComponentDesc)
+TB_DEFINE_COMPONENT(hull, HullComponent, HullComponentDesc)
 TB_DEFINE_COMPONENT(mast, MastComponent, MastComponent)
 TB_DEFINE_COMPONENT(boat_camera, BoatCameraComponent, BoatCameraComponentDesc)
 
@@ -149,6 +175,18 @@ void tb_boat_movement_component_descriptor(ComponentDescriptor *desc) {
       .create = tb_create_boat_movement_component,
       .destroy = tb_destroy_boat_movement_component,
       .deserialize = deserialize_boat_movement_component,
+  };
+}
+
+void tb_hull_component_descriptor(ComponentDescriptor *desc) {
+  *desc = (ComponentDescriptor){
+      .name = "Hull",
+      .size = sizeof(HullComponent),
+      .id = HullComponentId,
+      .id_str = HullComponentIdStr,
+      .create = tb_create_hull_component,
+      .destroy = tb_destroy_hull_component,
+      .deserialize = deserialize_hull_component,
   };
 }
 

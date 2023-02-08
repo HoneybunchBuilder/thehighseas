@@ -1,6 +1,7 @@
 #include "boatmovementsystem.h"
 
 #include "inputcomponent.h"
+#include "meshcomponent.h"
 #include "oceancomponent.h"
 #include "profiling.h"
 #include "sailingcomponents.h"
@@ -74,12 +75,53 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     TransformComponent *hull_transform = &out_hull_trans[entity_idx];
     float3 hull_pos = hull_transform->transform.position;
 
-    OceanSample sample = tb_sample_ocean(ocean, out_ocean_trans,
-                                         (float2){hull_pos[0], hull_pos[2]});
-    hull_transform->transform.position[1] = sample.pos[1];
-    hull_transform->dirty = true;
-    hull_pos = hull_transform->transform.position;
-    float3 normal = normf3(crossf3(sample.tangent, sample.tangent));
+    // Take for samples
+    // One at the port, one at the stern
+    // one port and one starboard
+    //    *
+    //   / \  
+    //  /   \ 
+    //  |   |
+    //  *   *
+    //  |   |
+    //  \   /
+    //   \ /
+    //    *
+
+#define SAMPLE_COUNT 4
+    /*
+      const float3 min = hull_mesh->local_aabb.min;
+      const float3 max = hull_mesh->local_aabb.max;
+    */
+    const float3 min = {-1, -1, 0};
+    const float3 max = {1, 1, 0};
+
+    const float2 sample_points[SAMPLE_COUNT] = {
+        {hull_pos[0], hull_pos[2] + max[2]},
+        {hull_pos[0] - min[0], hull_pos[2]},
+        {hull_pos[0] + max[0], hull_pos[2]},
+        {hull_pos[0], hull_pos[2] - min[2]},
+    };
+    OceanSample average_sample = {.pos = {0}};
+    for (uint32_t i = 0; i < SAMPLE_COUNT; ++i) {
+      const float2 point = sample_points[i];
+      OceanSample sample =
+          tb_sample_ocean(ocean, out_ocean_trans, (float2){point[0], point[2]});
+      average_sample.pos += sample.pos;
+      average_sample.tangent += sample.tangent;
+      average_sample.binormal += sample.binormal;
+    }
+    average_sample.pos /= SAMPLE_COUNT;
+    average_sample.tangent /= SAMPLE_COUNT;
+    average_sample.tangent = normf3(average_sample.tangent);
+    average_sample.binormal /= SAMPLE_COUNT;
+    average_sample.binormal = normf3(average_sample.tangent);
+
+    hull_transform->transform.position[1] = average_sample.pos[1];
+    float3 normal =
+        normf3(crossf3(average_sample.tangent, average_sample.tangent));
+
+#undef SAMPLE_COUNT
   }
 
   // Write output

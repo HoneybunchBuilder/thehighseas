@@ -13,6 +13,9 @@
 #define BoatCameraComponentId 0xDEAD0004
 #define BoatCameraComponentIdStr "0xDEAD0004"
 
+typedef struct MeshComponent MeshComponent;
+typedef struct TransformComponent TransformComponent;
+
 // Tracks the state of the wind
 // Currently this is intended to mostly be a single use global component
 // but in the future the idea is to look up this component based on
@@ -51,6 +54,8 @@ typedef struct BoatMovementComponentDesc {
 
 typedef struct HullComponent {
   float bouyancy; // How fast the hull will lerp to the target height
+  // Filled in via on_loaded
+  AABB child_mesh_aabb;
 } HullComponent;
 
 typedef struct HullComponentDesc {

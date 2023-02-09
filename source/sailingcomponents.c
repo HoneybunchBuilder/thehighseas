@@ -2,6 +2,9 @@
 #include "SDL2/SDL_stdinc.h"
 #include "json-c/json_object.h"
 #include "json-c/linkhash.h"
+#include "meshcomponent.h"
+#include "tbcommon.h"
+#include "transformcomponent.h"
 #include "world.h"
 
 bool create_wind_component(WindComponent *comp, const WindComponent *desc,
@@ -87,6 +90,48 @@ bool deserialize_hull_component(json_object *json, void *out_desc) {
       desc->bouyancy = (float)json_object_get_double(value);
     }
   }
+  return true;
+}
+
+bool hull_component_on_loaded(EntityId id, const World *world,
+                              void *component) {
+  HullComponent *self = (HullComponent *)component;
+  // Look up some component stores
+  const ComponentStore *transform_store = NULL;
+  const ComponentStore *mesh_store = NULL;
+  for (uint32_t i = 0; i < world->component_store_count; ++i) {
+    const ComponentStore *store = &world->component_stores[i];
+    if (store->id == TransformComponentId) {
+      transform_store = store;
+    }
+    if (store->id == MeshComponentId) {
+      mesh_store = store;
+    }
+  }
+  TB_CHECK_RETURN(transform_store != NULL && mesh_store != NULL,
+                  "Required stores not found", false);
+  // Look up hull's transform
+  const TransformComponent *hull_trans =
+      tb_get_component(transform_store, id, TransformComponent);
+  EntityId child = hull_trans->children[2];
+  const MeshComponent *child_mesh =
+      tb_get_component(mesh_store, child, MeshComponent);
+  const TransformComponent *child_transform =
+      tb_get_component(transform_store, child, TransformComponent);
+
+  float4x4 world_mat =
+      tb_transform_get_world_matrix((TransformComponent *)child_transform);
+  AABB world_aabb = {
+      f4tof3(mul4f44f(f3tof4(child_mesh->local_aabb.min, 1.0f), world_mat)),
+      f4tof3(mul4f44f(f3tof4(child_mesh->local_aabb.max, 1.0f), world_mat)),
+  };
+
+  float3 hull_pos = hull_trans->transform.position;
+  self->child_mesh_aabb = (AABB){
+      world_aabb.min - hull_pos,
+      world_aabb.max - hull_pos,
+  };
+
   return true;
 }
 
@@ -187,6 +232,7 @@ void tb_hull_component_descriptor(ComponentDescriptor *desc) {
       .create = tb_create_hull_component,
       .destroy = tb_destroy_hull_component,
       .deserialize = deserialize_hull_component,
+      .on_loaded = hull_component_on_loaded,
   };
 }
 

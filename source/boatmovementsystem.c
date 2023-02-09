@@ -33,7 +33,6 @@ void tick_boat_movement_system(BoatMovementSystem *self,
   TracyCZoneN(ctx, "Boat Movement System Tick", true);
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
-  EntityId *mov_entities = tb_get_column_entity_ids(input, 0);
   EntityId *hull_entities = tb_get_column_entity_ids(input, 1);
   EntityId *ocean_entities = tb_get_column_entity_ids(input, 3);
   uint32_t mov_entity_count = tb_get_column_component_count(input, 0);
@@ -42,11 +41,6 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     TracyCZoneEnd(ctx);
     return;
   }
-
-  const PackedComponentStore *base_trans_store =
-      tb_get_column_check_id(input, 0, 0, TransformComponentId);
-  const PackedComponentStore *boat_mov_store =
-      tb_get_column_check_id(input, 0, 1, BoatMovementComponentId);
 
   const PackedComponentStore *hull_trans_store =
       tb_get_column_check_id(input, 1, 0, TransformComponentId);
@@ -74,27 +68,25 @@ void tick_boat_movement_system(BoatMovementSystem *self,
   for (uint32_t entity_idx = 0; entity_idx < mov_entity_count; ++entity_idx) {
     TransformComponent *hull_transform = &out_hull_trans[entity_idx];
     float3 hull_pos = hull_transform->transform.position;
+    const HullComponent *hull_comp =
+        tb_get_component(hull_store, entity_idx, HullComponent);
 
-    // Take for samples
+    // Take four samples
     // One at the port, one at the stern
     // one port and one starboard
-    //    *
-    //   / \  
-    //  /   \ 
-    //  |   |
-    //  *   *
-    //  |   |
-    //  \   /
-    //   \ /
-    //    *
+    //    *    |
+    //   / \   |
+    //  /   \  |
+    //  |   |  |
+    //  *   *  |
+    //  |   |  |
+    //  \   /  |
+    //   \ /   |
+    //    *    |
 
 #define SAMPLE_COUNT 4
-    /*
-      const float3 min = hull_mesh->local_aabb.min;
-      const float3 max = hull_mesh->local_aabb.max;
-    */
-    const float3 min = {-1, -1, 0};
-    const float3 max = {1, 1, 0};
+    const float3 min = hull_comp->child_mesh_aabb.min;
+    const float3 max = hull_comp->child_mesh_aabb.max;
 
     const float2 sample_points[SAMPLE_COUNT] = {
         {hull_pos[0], hull_pos[2] + max[2]},
@@ -120,9 +112,12 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     hull_transform->transform.position[1] = average_sample.pos[1];
     float3 normal =
         normf3(crossf3(average_sample.tangent, average_sample.tangent));
-
+    (void)normal;
 #undef SAMPLE_COUNT
   }
+
+  // TODO: Handle input
+  (void)input_comp;
 
   // Write output
   output->set_count = 2;

@@ -13,10 +13,11 @@ bool create_boat_movement_system(BoatMovementSystem *self,
                                  const BoatMovementSystemDescriptor *desc,
                                  uint32_t system_dep_count,
                                  System *const *system_deps) {
-  (void)system_dep_count;
-  (void)system_deps;
+  VisualLoggingSystem *vlog =
+      tb_get_system(system_deps, system_dep_count, VisualLoggingSystem);
   *self = (BoatMovementSystem){
       .tmp_alloc = desc->tmp_alloc,
+      .vlog = vlog,
   };
   return true;
 }
@@ -88,15 +89,17 @@ void tick_boat_movement_system(BoatMovementSystem *self,
 
     const float2 sample_points[SAMPLE_COUNT] = {
         {hull_pos[0], hull_pos[2] + max[2]},
-        {hull_pos[0] - min[0], hull_pos[2]},
+        {hull_pos[0] + min[0], hull_pos[2]},
         {hull_pos[0] + max[0], hull_pos[2]},
-        {hull_pos[0], hull_pos[2] - min[2]},
+        {hull_pos[0], hull_pos[2] + min[2]},
     };
     OceanSample average_sample = {.pos = {0}};
     for (uint32_t i = 0; i < SAMPLE_COUNT; ++i) {
       const float2 point = sample_points[i];
-      OceanSample sample =
-          tb_sample_ocean(ocean, out_ocean_trans, (float2){point[0], point[2]});
+      tb_vlog_location(self->vlog, (float3){point[0], 10.0f, point[1]}, 0.4f,
+                       normf3((float3){point[0], 0, point[1]}));
+
+      OceanSample sample = tb_sample_ocean(ocean, out_ocean_trans, point);
       average_sample.pos += sample.pos;
       average_sample.tangent += sample.tangent;
       average_sample.binormal += sample.binormal;
@@ -155,6 +158,8 @@ void tb_boat_movement_system_descriptor(
       .deps[1] = {2, {TransformComponentId, HullComponentId}},
       .deps[2] = {1, {InputComponentId}},
       .deps[3] = {2, {TransformComponentId, OceanComponentId}},
+      .system_dep_count = 1,
+      .system_deps[0] = VisualLoggingSystemId,
       .create = tb_create_boat_movement_system,
       .destroy = tb_destroy_boat_movement_system,
       .tick = tb_tick_boat_movement_system,

@@ -6,6 +6,7 @@
 #include "profiling.h"
 #include "sailingcomponents.h"
 #include "transformcomponent.h"
+#include "visualloggingsystem.h"
 #include "world.h"
 
 bool create_boat_movement_system(BoatMovementSystem *self,
@@ -27,9 +28,6 @@ void destroy_boat_movement_system(BoatMovementSystem *self) {
 void tick_boat_movement_system(BoatMovementSystem *self,
                                const SystemInput *input, SystemOutput *output,
                                float delta_seconds) {
-  (void)input;
-  (void)output;
-  (void)delta_seconds;
   TracyCZoneN(ctx, "Boat Movement System Tick", true);
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
@@ -110,10 +108,14 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     average_sample.binormal = normf3(average_sample.binormal);
 
     hull_transform->transform.position[1] = average_sample.pos[1];
+
     float3 normal =
         normf3(crossf3(average_sample.binormal, average_sample.tangent));
-    hull_transform->transform.rotation =
-        quat_from_axes(average_sample.tangent, average_sample.binormal, normal);
+    Quaternion slerped_rot = slerp(
+        hull_transform->transform.rotation,
+        quat_from_axes(average_sample.tangent, average_sample.binormal, normal),
+        clampf(delta_seconds, 0.0f, 1.0f));
+    hull_transform->transform.rotation = slerped_rot;
 #undef SAMPLE_COUNT
   }
 

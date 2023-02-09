@@ -375,7 +375,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     time = SDL_GetPerformanceCounter() - start_time;
     delta_time = time - last_time;
     delta_time_seconds =
-        (float)((double)delta_time / (double)(SDL_GetPerformanceFrequency()));
+        (float)((double)delta_time / (double)SDL_GetPerformanceFrequency());
     last_time = time;
 
     // Tick the world

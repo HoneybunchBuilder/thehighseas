@@ -71,27 +71,28 @@ void tick_boat_movement_system(BoatMovementSystem *self,
         tb_get_component(hull_store, entity_idx, HullComponent);
 
     // Take four samples
-    // One at the port, one at the stern
-    // one port and one starboard
+    // One at the port, two at the stern
+    // one port, one starboard
+    // one in the middle forward
     //    *    |
     //   / \   |
     //  /   \  |
+    //  * * *  |
     //  |   |  |
-    //  *   *  |
     //  |   |  |
-    //  \   /  |
-    //   \ /   |
-    //    *    |
+    //  *___*  |
+    //         |
 
-#define SAMPLE_COUNT 4
+#define SAMPLE_COUNT 5
     const float3 min = hull_comp->child_mesh_aabb.min;
     const float3 max = hull_comp->child_mesh_aabb.max;
 
     const float2 sample_points[SAMPLE_COUNT] = {
-        {hull_pos[0], hull_pos[2] + max[2]},
-        {hull_pos[0] + min[0], hull_pos[2]},
-        {hull_pos[0] + max[0], hull_pos[2]},
-        {hull_pos[0], hull_pos[2] + min[2]},
+        {hull_pos[0] + max[0], hull_pos[2]},          // Bow
+        {hull_pos[0] + min[0], hull_pos[2] + min[2]}, // Port Stern
+        {hull_pos[0] + min[0], hull_pos[2] + max[2]}, // Starboard Stern
+        {hull_pos[0], hull_pos[2] + min[2]},          // Port
+        {hull_pos[0], hull_pos[2] + max[2]},          // Starboard
     };
     OceanSample average_sample = {.pos = {0}};
     for (uint32_t i = 0; i < SAMPLE_COUNT; ++i) {

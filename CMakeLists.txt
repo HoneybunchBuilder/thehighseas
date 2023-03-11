@@ -7,6 +7,7 @@ if(NOT TB_SOURCE_PATH)
 endif()
 
 option(FINAL "Compile with the intention to redistribute" OFF)
+option(TB_BUILD_SAMPLES "Compile samples" OFF)
 option(PROFILE_TRACY "Compile with support for the tracy profiler" ON)
 option(COOK_ASSETS "Process assets for runtime loading" ON)
 

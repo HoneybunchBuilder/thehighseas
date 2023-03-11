@@ -56,6 +56,9 @@ typedef struct HullComponent {
   float bouyancy; // How fast the hull will lerp to the target height
   // Filled in via on_loaded
   AABB child_mesh_aabb;
+
+  float max_speed;
+  float3 velocity;
 } HullComponent;
 
 typedef struct HullComponentDesc {

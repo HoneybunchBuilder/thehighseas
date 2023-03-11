@@ -63,14 +63,31 @@ void tick_boat_movement_system(BoatMovementSystem *self,
                    TransformComponent);
   tb_make_out_copy(out_hull_trans, self->tmp_alloc, hull_trans_store,
                    mov_entity_count, TransformComponent);
+  tb_make_out_copy(out_hulls, self->tmp_alloc, hull_store, mov_entity_count,
+                   HullComponent);
+  // Every hull has a parent boat transform which is what we want to move
+  EntityId *boat_entities =
+      tb_alloc_nm_tp(self->tmp_alloc, hull_entity_count, EntityId);
+  TransformComponent *out_boat_trans =
+      tb_alloc_nm_tp(self->tmp_alloc, hull_entity_count, TransformComponent);
+
+  // Calculate wind direction
+
+  // TODO: look this up from component(s) in the world
+  float wind_angle = 0.9f;
+  Quaternion wind_rot = angle_axis_to_quat(((float4){0, 1, 0, wind_angle}));
+  float3 wind_dir = -qrotf3(wind_rot, (float3){1, 0, 0});
 
   for (uint32_t entity_idx = 0; entity_idx < mov_entity_count; ++entity_idx) {
     TransformComponent *hull_transform = &out_hull_trans[entity_idx];
     float3 hull_pos = hull_transform->transform.position;
-    const HullComponent *hull_comp =
-        tb_get_component(hull_store, entity_idx, HullComponent);
+    HullComponent *hull_comp = &out_hulls[entity_idx];
 
-    // Take four samples
+    out_boat_trans[entity_idx] = *tb_transform_get_parent(hull_transform);
+    TransformComponent *boat_transform = &out_boat_trans[entity_idx];
+    boat_entities[entity_idx] = hull_transform->parent;
+
+    // Take five samples
     // One at the port, two at the stern
     // one port, one starboard
     // one in the middle forward
@@ -121,13 +138,33 @@ void tick_boat_movement_system(BoatMovementSystem *self,
         clampf(delta_seconds, 0.0f, 1.0f));
     hull_transform->transform.rotation = slerped_rot;
 #undef SAMPLE_COUNT
+    // Project tangent onto the XZ plane to get the forward we want to use for
+    // movement
+    float3 mov_forward =
+        normf3((float3){SDL_fabsf(average_sample.tangent[1]), 0, 0});
+
+    // Dot product between the boat heading and the wind direction to determine
+    // acceleration
+    float wind_alpha = SDL_fabsf(dotf3(mov_forward, wind_dir));
+
+    // Apply acceleration to velocity and then clamp based on max speed
+    float acceleration = lerpf(wind_alpha, 0.0f, 0.5f);
+    hull_comp->velocity += mov_forward * acceleration;
+    // TEMP:
+    hull_comp->max_speed = 1.0f;
+    if (magsqf3(hull_comp->velocity) >
+        (hull_comp->max_speed * hull_comp->max_speed)) {
+      hull_comp->velocity = normf3(hull_comp->velocity) * hull_comp->max_speed;
+    }
+
+    boat_transform->transform.position += hull_comp->velocity;
   }
 
   // TODO: Handle input
   (void)input_comp;
 
   // Write output
-  output->set_count = 2;
+  output->set_count = 4;
   output->write_sets[0] = (SystemWriteSet){
       .entities = hull_entities,
       .count = hull_entity_count,
@@ -135,6 +172,18 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       .components = (uint8_t *)out_hull_trans,
   };
   output->write_sets[1] = (SystemWriteSet){
+      .entities = hull_entities,
+      .count = hull_entity_count,
+      .id = HullComponentId,
+      .components = (uint8_t *)out_hulls,
+  };
+  output->write_sets[2] = (SystemWriteSet){
+      .entities = boat_entities,
+      .count = hull_entity_count,
+      .id = TransformComponentId,
+      .components = (uint8_t *)out_boat_trans,
+  };
+  output->write_sets[3] = (SystemWriteSet){
       .entities = ocean_entities,
       .count = 1,
       .id = TransformComponentId,

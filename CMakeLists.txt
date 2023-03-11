@@ -6,6 +6,10 @@ if(NOT TB_SOURCE_PATH)
   message(FATAL_ERROR "Please specify TB_SOURCE_PATH as a source path to the toybox engine")
 endif()
 
+option(FINAL "Compile with the intention to redistribute" OFF)
+option(PROFILE_TRACY "Compile with support for the tracy profiler" ON)
+option(COOK_ASSETS "Process assets for runtime loading" ON)
+
 get_filename_component(TB_ABS_PATH ${TB_SOURCE_PATH} ABSOLUTE)
 message("Including: ${TB_ABS_PATH}/CMakeLists.txt")
 include(${TB_ABS_PATH}/CMakeLists.txt)
@@ -23,10 +27,6 @@ set(GAME_NAME "thehighseas")
 set(GAME_VERSION_MAJOR ${CMAKE_PROJECT_VERSION_MAJOR})
 set(GAME_VERSION_MINOR ${CMAKE_PROJECT_VERSION_MINOR})
 set(GAME_VERSION_PATCH ${CMAKE_PROJECT_VERSION_PATCH})
-
-option(FINAL "Compile with the intention to redistribute" OFF)
-option(PROFILE_TRACY "Compile with support for the tracy profiler" ON)
-option(COOK_ASSETS "Process assets for runtime loading" ON)
 
 file(GLOB_RECURSE source "source/*.c" )
 

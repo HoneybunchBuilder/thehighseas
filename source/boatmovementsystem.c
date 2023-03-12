@@ -136,32 +136,60 @@ void tick_boat_movement_system(BoatMovementSystem *self,
         hull_transform->transform.rotation,
         quat_from_axes(average_sample.tangent, average_sample.binormal, normal),
         clampf(delta_seconds, 0.0f, 1.0f));
-    hull_transform->transform.rotation = slerped_rot;
 #undef SAMPLE_COUNT
-    // Project tangent onto the XZ plane to get the forward we want to use for
-    // movement
-    float3 mov_forward =
-        normf3((float3){SDL_fabsf(average_sample.tangent[1]), 0, 0});
 
-    // Dot product between the boat heading and the wind direction to determine
-    // acceleration
-    float wind_alpha = SDL_fabsf(dotf3(mov_forward, wind_dir));
+    // Modify boat rotation based on input
+    {
+      float rotation_alpha = 0.0f;
+      bool rotating = false;
+      if (input_comp->keyboard.key_A == 1) {
+        rotation_alpha = -1.0f;
+        rotating = true;
+      }
+      if (input_comp->keyboard.key_D == 1) {
+        rotation_alpha = 1.0f;
+        rotating = true;
+      }
 
-    // Apply acceleration to velocity and then clamp based on max speed
-    float acceleration = lerpf(wind_alpha, 0.0f, 0.5f);
-    hull_comp->velocity += mov_forward * acceleration;
-    // TEMP:
-    hull_comp->max_speed = 1.0f;
-    if (magsqf3(hull_comp->velocity) >
-        (hull_comp->max_speed * hull_comp->max_speed)) {
-      hull_comp->velocity = normf3(hull_comp->velocity) * hull_comp->max_speed;
+      if (rotating) {
+        const float accel_rate = 0.00001f;
+        const float accel = accel_rate * rotation_alpha;
+
+        hull_comp->angular_velocity =
+            mulq(hull_comp->angular_velocity,
+                 angle_axis_to_quat((float4){0, 1, 0, accel}));
+      }
+      hull_transform->transform.rotation =
+          mulq(hull_transform->transform.rotation, hull_comp->angular_velocity);
     }
 
-    boat_transform->transform.position += hull_comp->velocity;
-  }
+    // Move boat forward based on angle compared to the wind direction
+    {
+      // Project tangent onto the XZ plane to get the forward we want to use for
+      // movement
+      float3 mov_forward =
+          normf3(qrotf3(hull_transform->transform.rotation, (float3){1, 0, 0}));
 
-  // TODO: Handle input
-  (void)input_comp;
+      // Dot product between the boat heading and the wind direction to
+      // determine acceleration
+      float wind_alpha = dotf3(mov_forward, wind_dir);
+
+      if (input_comp->keyboard.key_W > 0) {
+        // Apply acceleration to velocity and then clamp based on max speed
+        float acceleration = lerpf(wind_alpha, 0.0f, 0.5f);
+        hull_comp->velocity += mov_forward * acceleration;
+        // TEMP:
+        hull_comp->max_speed = 1.0f;
+        if (magsqf3(hull_comp->velocity) >
+            (hull_comp->max_speed * hull_comp->max_speed)) {
+          hull_comp->velocity =
+              normf3(hull_comp->velocity) * hull_comp->max_speed;
+        }
+      }
+
+      boat_transform->transform.position += hull_comp->velocity;
+    }
+  }
 
   // Write output
   output->set_count = 4;

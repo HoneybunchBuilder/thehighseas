@@ -72,6 +72,7 @@ bool create_hull_component(HullComponent *comp, const HullComponentDesc *desc,
   (void)system_deps;
   *comp = (HullComponent){
       .bouyancy = desc->bouyancy,
+      .angular_velocity = (Quaternion){0, 0, 0, 1},
   };
   return true;
 }

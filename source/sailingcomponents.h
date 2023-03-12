@@ -60,8 +60,7 @@ typedef struct HullComponent {
   float max_speed;
   float3 velocity;
 
-  float max_angular_speed;
-  Quaternion angular_velocity;
+  float target_heading;
 } HullComponent;
 
 typedef struct HullComponentDesc {

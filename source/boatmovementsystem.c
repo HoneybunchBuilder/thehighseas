@@ -152,15 +152,16 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       }
 
       if (rotating) {
-        const float accel_rate = 0.00001f;
+        const float accel_rate = 0.1f;
         const float accel = accel_rate * rotation_alpha;
 
-        hull_comp->angular_velocity =
-            mulq(hull_comp->angular_velocity,
-                 angle_axis_to_quat((float4){0, 1, 0, accel}));
+        hull_comp->target_heading += accel;
       }
+
       hull_transform->transform.rotation =
-          mulq(hull_transform->transform.rotation, hull_comp->angular_velocity);
+          mulq(hull_transform->transform.rotation,
+               angle_axis_to_quat((float4){
+                   0, 1, 0, hull_comp->target_heading * delta_seconds}));
     }
 
     // Move boat forward based on angle compared to the wind direction
@@ -169,25 +170,38 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       // movement
       float3 mov_forward =
           normf3(qrotf3(hull_transform->transform.rotation, (float3){1, 0, 0}));
+      mov_forward = normf3((float3){mov_forward[0], 0.0f, mov_forward[2]});
 
       // Dot product between the boat heading and the wind direction to
       // determine acceleration
-      float wind_alpha = dotf3(mov_forward, wind_dir);
+      float wind_alpha = dotf3(mov_forward, -wind_dir);
 
       if (input_comp->keyboard.key_W > 0) {
         // Apply acceleration to velocity and then clamp based on max speed
         float acceleration = lerpf(wind_alpha, 0.0f, 0.5f);
         hull_comp->velocity += mov_forward * acceleration;
-        // TEMP:
-        hull_comp->max_speed = 1.0f;
-        if (magsqf3(hull_comp->velocity) >
-            (hull_comp->max_speed * hull_comp->max_speed)) {
-          hull_comp->velocity =
-              normf3(hull_comp->velocity) * hull_comp->max_speed;
+      } else {
+        // Try to apply some drag if there's no input
+        const float speed_threshold = 0.1f;
+        const float speed = magf3(hull_comp->velocity);
+        const float drag = 0.1f;
+        if (speed > speed_threshold && speed - drag >= 0.0f) {
+          const float3 drag_dir = -mov_forward;
+          hull_comp->velocity += (drag_dir * drag);
+        } else {
+          hull_comp->velocity = (float3){0};
         }
       }
 
-      boat_transform->transform.position += hull_comp->velocity;
+      // TEMP
+      hull_comp->max_speed = 100.0f;
+      const float speed_sq = hull_comp->max_speed * hull_comp->max_speed;
+      if (magsqf3(hull_comp->velocity) > speed_sq) {
+        hull_comp->velocity =
+            normf3(hull_comp->velocity) * hull_comp->max_speed;
+      }
+
+      boat_transform->transform.position += hull_comp->velocity * delta_seconds;
     }
   }
 

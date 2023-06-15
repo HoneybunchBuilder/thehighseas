@@ -291,7 +291,6 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   SystemId tick_order[SYSTEM_COUNT];
   {
     uint32_t i = 0;
-    tick_order[i++] = RenderPipelineSystemId;
     tick_order[i++] = InputSystemId;
     tick_order[i++] = NoClipControllerSystemId;
     tick_order[i++] = BoatCameraSystemId;
@@ -301,6 +300,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     tick_order[i++] = ShadowSystemId;
     tick_order[i++] = SkySystemId;
     tick_order[i++] = ViewSystemId;
+    tick_order[i++] = RenderPipelineSystemId;
     tick_order[i++] = RenderObjectSystemId;
     tick_order[i++] = TextureSystemId;
     tick_order[i++] = MaterialSystemId;

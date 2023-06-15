@@ -127,11 +127,9 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
 
     // Make sure the camera looks at the hull
     transform_comp->transform.rotation =
-        look_at_quat(hull_pos, transform_comp->transform.position,
-                     (float3){0.0f, 1.0f, 0.0f});
+        mf33_to_quat(m44tom33(look_at(transform_comp->transform.position,
+                                      hull_pos, (float3){0.0f, 1.0f, 0.0f})));
   }
-
-  (void)input_store;
 
   // Report output
   output->set_count = 2;

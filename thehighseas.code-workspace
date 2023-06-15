@@ -13,16 +13,7 @@
   "settings": {
     "files.associations": {
       "*.rt": "hlsl",
-      "algorithm": "c",
-      "locale": "c",
-      "optional": "c",
-      "simd.h": "c",
-      "float.h": "c",
       "*.hlsli": "cpp",
-      "sailingcomponents.h": "c",
-      "type_traits": "c",
-      "visualloggingsystem.h": "c",
-      "profiling.h": "c"
     }
   }
 }

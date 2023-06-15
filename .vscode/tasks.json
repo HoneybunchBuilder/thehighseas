@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cmake",
+      "label": "Build Active Config",
+      "command": "build",
+      "targets": [
+        "thehighseas"
+      ],
+      "preset": "${command:cmake.activeBuildPresetName}",
+      "group": {
+        "isDefault": true,
+        "kind": "build"
+      },
+      "problemMatcher": [],
+      "detail": "Builds the currently active cmake configuration"
+    }
+  ]
+}

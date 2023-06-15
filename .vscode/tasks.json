@@ -3,18 +3,14 @@
   "tasks": [
     {
       "type": "cmake",
-      "label": "Build Active Config",
+      "label": "CMake: build",
       "command": "build",
       "targets": [
-        "thehighseas"
+        "${command:cmake.buildTargetName}"
       ],
       "preset": "${command:cmake.activeBuildPresetName}",
-      "group": {
-        "isDefault": true,
-        "kind": "build"
-      },
-      "problemMatcher": [],
-      "detail": "Builds the currently active cmake configuration"
+      "group": "build",
+      "problemMatcher": "$gcc",
     }
   ]
 }

@@ -1,5 +1,10 @@
 {
   "files.associations": {
+    "*.hlsl": "c",
     "*.hlsli": "c",
-  }
+    "*.hlsl.cs": "c",
+    "*.hlsl.m": "c",
+  },
+  "cmake.configureOnOpen": false,
+  "cmake.useCMakePresets": "auto",
 }

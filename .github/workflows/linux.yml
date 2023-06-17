@@ -79,7 +79,7 @@ jobs:
       working-directory: ./thehighseas
       run: cmake --build --preset release-x64-linux-ninja-llvm
 
-    - uses: game-ci/steam-deploy@v3
+    - uses: game-ci/steam-deploy@v1.3.0
       with:
         username: ${{ secrets.STEAM_USERNAME }}
         password: ${{ secrets.STEAM_PASSWORD }}

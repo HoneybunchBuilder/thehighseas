@@ -113,7 +113,7 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
 
       Quaternion yaw_quat = angle_axis_to_quat((float4){0, 1, 0, look_yaw});
       hull_to_camera = normf3(qrotf3(yaw_quat, hull_to_camera));
-      float3 right = normf3(crossf3((float3){0, 1, 0}, hull_to_camera));
+      float3 right = normf3(crossf3(TB_UP, hull_to_camera));
       Quaternion pitch_quat = angle_axis_to_quat(f3tof4(right, look_pitch));
       hull_to_camera = normf3(qrotf3(pitch_quat, hull_to_camera));
     }
@@ -126,9 +126,8 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
         target_center + (hull_to_camera * target_dist);
 
     // Make sure the camera looks at the hull
-    transform_comp->transform.rotation =
-        mf33_to_quat(m44tom33(look_at(transform_comp->transform.position,
-                                      hull_pos, (float3){0.0f, 1.0f, 0.0f})));
+    transform_comp->transform.rotation = mf33_to_quat(
+        m44tom33(look_at(transform_comp->transform.position, hull_pos, TB_UP)));
   }
 
   // Report output

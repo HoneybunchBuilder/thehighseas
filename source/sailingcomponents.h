@@ -58,9 +58,9 @@ typedef struct HullComponent {
   AABB child_mesh_aabb;
 
   float max_speed;
-  float3 velocity;
+  float speed;
 
-  float target_heading;
+  float heading_velocity; // how fast the heading changes
 } HullComponent;
 
 typedef struct HullComponentDesc {

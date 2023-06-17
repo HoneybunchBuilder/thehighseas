@@ -72,7 +72,7 @@ bool create_hull_component(HullComponent *comp, const HullComponentDesc *desc,
   (void)system_deps;
   *comp = (HullComponent){
       .bouyancy = desc->bouyancy,
-      .target_heading = 0.0f,
+      .heading_velocity = 0.0f,
   };
   return true;
 }

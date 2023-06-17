@@ -75,8 +75,8 @@ void tick_boat_movement_system(BoatMovementSystem *self,
 
   // TODO: look this up from component(s) in the world
   float wind_angle = 0.9f;
-  Quaternion wind_rot = angle_axis_to_quat(((float4){0, 1, 0, wind_angle}));
-  float3 wind_dir = -qrotf3(wind_rot, (float3){1, 0, 0});
+  Quaternion wind_rot = angle_axis_to_quat((f3tof4(TB_UP, wind_angle)));
+  float3 wind_dir = -qrotf3(wind_rot, TB_RIGHT);
 
   for (uint32_t entity_idx = 0; entity_idx < mov_entity_count; ++entity_idx) {
     TransformComponent *hull_transform = &out_hull_trans[entity_idx];
@@ -114,8 +114,8 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     OceanSample average_sample = {.pos = {0}};
     for (uint32_t i = 0; i < SAMPLE_COUNT; ++i) {
       const float2 point = sample_points[i];
-      tb_vlog_location(self->vlog, (float3){point[0], 10.0f, point[1]}, 0.4f,
-                       normf3((float3){point[0], 0, point[1]}));
+      // tb_vlog_location(self->vlog, (float3){point[0], 10.0f, point[1]}, 0.4f,
+      //                  normf3((float3){point[0], 0, point[1]}));
 
       OceanSample sample = tb_sample_ocean(ocean, out_ocean_trans, point);
       average_sample.pos += sample.pos;
@@ -143,33 +143,44 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       float rotation_alpha = 0.0f;
       bool rotating = false;
       if (input_comp->keyboard.key_A == 1) {
-        rotation_alpha = -1.0f;
-        rotating = true;
-      }
-      if (input_comp->keyboard.key_D == 1) {
         rotation_alpha = 1.0f;
         rotating = true;
       }
+      if (input_comp->keyboard.key_D == 1) {
+        rotation_alpha = -1.0f;
+        rotating = true;
+      }
 
+      const float accel_rate = 0.1f;
       if (rotating) {
-        const float accel_rate = 0.1f;
         const float accel = accel_rate * rotation_alpha;
+        hull_comp->heading_velocity += accel;
+      } else if (hull_comp->heading_velocity != 0.0f) {
+        hull_comp->heading_velocity -=
+            accel_rate * SDL_copysignf(1, hull_comp->heading_velocity);
+        if (hull_comp->heading_velocity > -0.01f &&
+            hull_comp->heading_velocity < 0.01f) {
+          hull_comp->heading_velocity = 0.0f;
+        }
+      }
 
-        hull_comp->target_heading += accel;
+      // Clamp rotational velocity
+      if (SDL_fabsf(hull_comp->heading_velocity) > 1.0f) {
+        hull_comp->heading_velocity =
+            1.0f * SDL_copysignf(1, hull_comp->heading_velocity);
       }
 
       hull_transform->transform.rotation =
           mulq(hull_transform->transform.rotation,
                angle_axis_to_quat((float4){
-                   0, 1, 0, hull_comp->target_heading * delta_seconds}));
+                   0, 1, 0, hull_comp->heading_velocity * delta_seconds}));
     }
 
     // Move boat forward based on angle compared to the wind direction
     {
-      // Project tangent onto the XZ plane to get the forward we want to use for
+      // Project forward onto the XZ plane to get the forward we want to use for
       // movement
-      float3 mov_forward =
-          normf3(qrotf3(hull_transform->transform.rotation, (float3){1, 0, 0}));
+      float3 mov_forward = transform_get_right(&hull_transform->transform);
       mov_forward = normf3((float3){mov_forward[0], 0.0f, mov_forward[2]});
 
       // Dot product between the boat heading and the wind direction to
@@ -179,29 +190,31 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       if (input_comp->keyboard.key_W > 0) {
         // Apply acceleration to velocity and then clamp based on max speed
         float acceleration = lerpf(wind_alpha, 0.0f, 0.5f);
-        hull_comp->velocity += mov_forward * acceleration;
+        hull_comp->speed += 0.1f;
       } else {
         // Try to apply some drag if there's no input
         const float speed_threshold = 0.1f;
-        const float speed = magf3(hull_comp->velocity);
         const float drag = 0.1f;
-        if (speed > speed_threshold && speed - drag >= 0.0f) {
-          const float3 drag_dir = -mov_forward;
-          hull_comp->velocity += (drag_dir * drag);
-        } else {
-          hull_comp->velocity = (float3){0};
+        if (hull_comp->speed > speed_threshold &&
+            hull_comp->speed - drag >= 0.0f) {
+          hull_comp->speed = drag * -SDL_copysignf(1, hull_comp->speed);
+        } else if (hull_comp->speed < SDL_FLT_EPSILON &&
+                   hull_comp->speed > -SDL_FLT_EPSILON) {
+          hull_comp->speed = 0.0f;
         }
       }
 
+      float3 velocity = mov_forward * hull_comp->speed;
+
       // TEMP
       hull_comp->max_speed = 100.0f;
-      const float speed_sq = hull_comp->max_speed * hull_comp->max_speed;
-      if (magsqf3(hull_comp->velocity) > speed_sq) {
-        hull_comp->velocity =
-            normf3(hull_comp->velocity) * hull_comp->max_speed;
+      float speed_sq = hull_comp->max_speed * hull_comp->max_speed;
+      if (magsqf3(velocity) > speed_sq) {
+        hull_comp->speed = hull_comp->max_speed;
+        velocity = normf3(velocity) * hull_comp->max_speed;
       }
 
-      boat_transform->transform.position += hull_comp->velocity * delta_seconds;
+      boat_transform->transform.position += velocity * delta_seconds;
     }
   }
 

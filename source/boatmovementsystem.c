@@ -80,12 +80,13 @@ void tick_boat_movement_system(BoatMovementSystem *self,
 
   for (uint32_t entity_idx = 0; entity_idx < mov_entity_count; ++entity_idx) {
     TransformComponent *hull_transform = &out_hull_trans[entity_idx];
-    float3 hull_pos = hull_transform->transform.position;
     HullComponent *hull_comp = &out_hulls[entity_idx];
 
     out_boat_trans[entity_idx] = *tb_transform_get_parent(hull_transform);
     TransformComponent *boat_transform = &out_boat_trans[entity_idx];
     boat_entities[entity_idx] = hull_transform->parent;
+
+    float3 hull_pos = boat_transform->transform.position;
 
     // Take five samples
     // One at the port, two at the stern
@@ -104,19 +105,21 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     float half_width = hull_comp->width * 0.5f;
     float half_depth = hull_comp->depth * 0.5f;
 
-    float3 forward = transform_get_forward(&hull_transform->transform);
-    float3 right = transform_get_right(&hull_transform->transform);
+    Quaternion boat_rot = boat_transform->transform.rotation;
+    float3 forward =
+        qrotf3(boat_rot, transform_get_forward(&hull_transform->transform));
+    float3 right =
+        qrotf3(boat_rot, transform_get_right(&hull_transform->transform));
 
     const float3 sample_points[SAMPLE_COUNT] = {
         hull_pos,
-        hull_pos - (forward * half_depth), // bow
+        hull_pos + (forward * half_depth), // bow
         hull_pos - (right * half_width),   // left center
         hull_pos + (right * half_width),   // right center
-        hull_pos - (right * half_width) + (forward * half_depth), // left stern
-        hull_pos + (right * half_width) + (forward * half_depth), // right stern
+        hull_pos - (right * half_width) - (forward * half_depth), // left stern
+        hull_pos + (right * half_width) - (forward * half_depth), // right stern
     };
     OceanSample average_sample = {.pos = {0}};
-    float greatest_height = FLT_MIN;
     for (uint32_t i = 0; i < SAMPLE_COUNT; ++i) {
       const float3 point = sample_points[i];
       tb_vlog_location(self->vlog, (float3){point[0], 10.0f, point[2]}, 0.4f,
@@ -127,9 +130,6 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       average_sample.pos += sample.pos;
       average_sample.tangent += sample.tangent;
       average_sample.binormal += sample.binormal;
-      if (sample.pos[1] > greatest_height) {
-        greatest_height = sample.pos[1];
-      }
     }
     average_sample.pos /= SAMPLE_COUNT;
     average_sample.tangent /= SAMPLE_COUNT;
@@ -137,7 +137,7 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     average_sample.binormal /= SAMPLE_COUNT;
     average_sample.binormal = normf3(average_sample.binormal);
 
-    hull_transform->transform.position[1] = greatest_height;
+    hull_transform->transform.position[1] = average_sample.pos[1];
 
     float3 normal =
         normf3(crossf3(average_sample.tangent, average_sample.binormal));
@@ -218,7 +218,7 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       float3 velocity = mov_forward * hull_comp->speed;
 
       // TEMP
-      hull_comp->max_speed = 100.0f;
+      hull_comp->max_speed = 25.0f;
       float speed_sq = hull_comp->max_speed * hull_comp->max_speed;
       if (magsqf3(velocity) > speed_sq) {
         hull_comp->speed = hull_comp->max_speed;

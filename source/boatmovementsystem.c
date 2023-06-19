@@ -116,6 +116,7 @@ void tick_boat_movement_system(BoatMovementSystem *self,
         hull_pos + (right * half_width) + (forward * half_depth), // right stern
     };
     OceanSample average_sample = {.pos = {0}};
+    float greatest_height = FLT_MIN;
     for (uint32_t i = 0; i < SAMPLE_COUNT; ++i) {
       const float3 point = sample_points[i];
       tb_vlog_location(self->vlog, (float3){point[0], 10.0f, point[2]}, 0.4f,
@@ -126,6 +127,9 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       average_sample.pos += sample.pos;
       average_sample.tangent += sample.tangent;
       average_sample.binormal += sample.binormal;
+      if (sample.pos[1] > greatest_height) {
+        greatest_height = sample.pos[1];
+      }
     }
     average_sample.pos /= SAMPLE_COUNT;
     average_sample.tangent /= SAMPLE_COUNT;
@@ -133,14 +137,16 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     average_sample.binormal /= SAMPLE_COUNT;
     average_sample.binormal = normf3(average_sample.binormal);
 
-    hull_transform->transform.position[1] = average_sample.pos[1];
+    hull_transform->transform.position[1] = greatest_height;
 
-    // float3 normal =
-    //     normf3(crossf3(average_sample.tangent, average_sample.binormal));
-    // hull_transform->transform.rotation = slerp(
-    //     hull_transform->transform.rotation,
-    //     quat_from_axes(average_sample.binormal, average_sample.tangent,
-    //     normal), clampf(delta_seconds, 0.0f, 1.0f));
+    float3 normal =
+        normf3(crossf3(average_sample.tangent, average_sample.binormal));
+    Quaternion rot = mf33_to_quat(
+        m44tom33(look_at((float3){0}, average_sample.binormal, normal)));
+
+    hull_transform->transform.rotation =
+        slerp(hull_transform->transform.rotation, rot,
+              clampf(delta_seconds, 0.0f, 1.0f));
 #undef SAMPLE_COUNT
 
     // Modify boat rotation based on input

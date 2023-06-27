@@ -120,18 +120,15 @@ bool hull_component_on_loaded(EntityId id, const World *world,
   const TransformComponent *child_transform =
       tb_get_component(transform_store, child, TransformComponent);
 
-  float4x4 world_mat =
-      tb_transform_get_world_matrix((TransformComponent *)child_transform);
-  AABB world_aabb = {
-      f4tof3(mul4f44f(f3tof4(child_mesh->local_aabb.min, 1.0f), world_mat)),
-      f4tof3(mul4f44f(f3tof4(child_mesh->local_aabb.max, 1.0f), world_mat)),
+  float4x4 obj_mat = transform_to_matrix(&child_transform->transform);
+  AABB aabb = (AABB){
+      f4tof3(mulf44(obj_mat, f3tof4(child_mesh->local_aabb.min, 1.0f))),
+      f4tof3(mulf44(obj_mat, f3tof4(child_mesh->local_aabb.max, 1.0f))),
   };
 
-  float3 hull_pos = hull_trans->transform.position;
-  self->child_mesh_aabb = (AABB){
-      world_aabb.min - hull_pos,
-      world_aabb.max - hull_pos,
-  };
+  float3 diff = aabb.max - aabb.min;
+  self->width = diff[0];
+  self->depth = diff[2];
 
   return true;
 }

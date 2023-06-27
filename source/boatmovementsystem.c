@@ -80,12 +80,13 @@ void tick_boat_movement_system(BoatMovementSystem *self,
 
   for (uint32_t entity_idx = 0; entity_idx < mov_entity_count; ++entity_idx) {
     TransformComponent *hull_transform = &out_hull_trans[entity_idx];
-    float3 hull_pos = hull_transform->transform.position;
     HullComponent *hull_comp = &out_hulls[entity_idx];
 
     out_boat_trans[entity_idx] = *tb_transform_get_parent(hull_transform);
     TransformComponent *boat_transform = &out_boat_trans[entity_idx];
     boat_entities[entity_idx] = hull_transform->parent;
+
+    float3 hull_pos = boat_transform->transform.position;
 
     // Take five samples
     // One at the port, two at the stern
@@ -100,24 +101,32 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     //  *___*  |
     //         |
 
-#define SAMPLE_COUNT 5
-    const float3 min = hull_comp->child_mesh_aabb.min;
-    const float3 max = hull_comp->child_mesh_aabb.max;
+#define SAMPLE_COUNT 6
+    float half_width = hull_comp->width * 0.5f;
+    float half_depth = hull_comp->depth * 0.5f;
 
-    const float2 sample_points[SAMPLE_COUNT] = {
-        {hull_pos[0] + max[0], hull_pos[2]},          // Bow
-        {hull_pos[0] + min[0], hull_pos[2] + min[2]}, // Port Stern
-        {hull_pos[0] + min[0], hull_pos[2] + max[2]}, // Starboard Stern
-        {hull_pos[0], hull_pos[2] + min[2]},          // Port
-        {hull_pos[0], hull_pos[2] + max[2]},          // Starboard
+    Quaternion boat_rot = boat_transform->transform.rotation;
+    float3 forward =
+        qrotf3(boat_rot, transform_get_forward(&hull_transform->transform));
+    float3 right =
+        qrotf3(boat_rot, transform_get_right(&hull_transform->transform));
+
+    const float3 sample_points[SAMPLE_COUNT] = {
+        hull_pos,
+        hull_pos + (forward * half_depth), // bow
+        hull_pos - (right * half_width),   // left center
+        hull_pos + (right * half_width),   // right center
+        hull_pos - (right * half_width) - (forward * half_depth), // left stern
+        hull_pos + (right * half_width) - (forward * half_depth), // right stern
     };
     OceanSample average_sample = {.pos = {0}};
     for (uint32_t i = 0; i < SAMPLE_COUNT; ++i) {
-      const float2 point = sample_points[i];
-      // tb_vlog_location(self->vlog, (float3){point[0], 10.0f, point[1]}, 0.4f,
-      //                  normf3((float3){point[0], 0, point[1]}));
+      const float3 point = sample_points[i];
+      tb_vlog_location(self->vlog, (float3){point[0], 10.0f, point[2]}, 0.4f,
+                       normf3((float3){point[0], 0, point[1]}));
 
-      OceanSample sample = tb_sample_ocean(ocean, out_ocean_trans, point);
+      OceanSample sample =
+          tb_sample_ocean(ocean, out_ocean_trans, (float2){point[0], point[2]});
       average_sample.pos += sample.pos;
       average_sample.tangent += sample.tangent;
       average_sample.binormal += sample.binormal;
@@ -131,11 +140,13 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     hull_transform->transform.position[1] = average_sample.pos[1];
 
     float3 normal =
-        normf3(crossf3(average_sample.binormal, average_sample.tangent));
-    Quaternion slerped_rot = slerp(
-        hull_transform->transform.rotation,
-        quat_from_axes(average_sample.tangent, average_sample.binormal, normal),
-        clampf(delta_seconds, 0.0f, 1.0f));
+        normf3(crossf3(average_sample.tangent, average_sample.binormal));
+    Quaternion rot = mf33_to_quat(
+        m44tom33(look_at((float3){0}, average_sample.binormal, normal)));
+
+    hull_transform->transform.rotation =
+        slerp(hull_transform->transform.rotation, rot,
+              clampf(delta_seconds, 0.0f, 1.0f));
 #undef SAMPLE_COUNT
 
     // Modify boat rotation based on input
@@ -170,8 +181,8 @@ void tick_boat_movement_system(BoatMovementSystem *self,
             1.0f * SDL_copysignf(1, hull_comp->heading_velocity);
       }
 
-      hull_transform->transform.rotation =
-          mulq(hull_transform->transform.rotation,
+      boat_transform->transform.rotation =
+          mulq(boat_transform->transform.rotation,
                angle_axis_to_quat((float4){
                    0, 1, 0, hull_comp->heading_velocity * delta_seconds}));
     }
@@ -180,7 +191,7 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     {
       // Project forward onto the XZ plane to get the forward we want to use for
       // movement
-      float3 mov_forward = transform_get_right(&hull_transform->transform);
+      float3 mov_forward = transform_get_forward(&boat_transform->transform);
       mov_forward = normf3((float3){mov_forward[0], 0.0f, mov_forward[2]});
 
       // Dot product between the boat heading and the wind direction to
@@ -207,7 +218,7 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       float3 velocity = mov_forward * hull_comp->speed;
 
       // TEMP
-      hull_comp->max_speed = 100.0f;
+      hull_comp->max_speed = 25.0f;
       float speed_sq = hull_comp->max_speed * hull_comp->max_speed;
       if (magsqf3(velocity) > speed_sq) {
         hull_comp->speed = hull_comp->max_speed;

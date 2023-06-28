@@ -88,7 +88,7 @@ void tick_boat_movement_system(BoatMovementSystem *self,
 
     float3 hull_pos = boat_transform->transform.position;
 
-    // Take five samples
+    // Take six samples
     // One at the port, two at the stern
     // one port, one starboard
     // one in the middle forward

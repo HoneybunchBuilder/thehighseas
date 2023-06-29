@@ -101,15 +101,29 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
 
     // Arcball the camera around the boat
     {
-      float2 look_axis = input_comp->mouse.axis;
 
       float look_yaw = 0.0f;
       float look_pitch = 0.0f;
       if (input_comp->mouse.left || input_comp->mouse.right ||
           input_comp->mouse.middle) {
+        float2 look_axis = input_comp->mouse.axis;
         look_yaw = look_axis[0] * delta_seconds * 5;
         look_pitch = look_axis[1] * delta_seconds * 5;
       };
+      if (input_comp->controller_count > 0) {
+        const TBGameControllerState *ctl_state =
+            &input_comp->controller_states[0];
+        float2 look_axis = ctl_state->right_stick;
+        float deadzone = 0.15f;
+        if (look_axis[0] > -deadzone && look_axis[0] < deadzone) {
+          look_axis[0] = 0.0f;
+        }
+        if (look_axis[1] > -deadzone && look_axis[1] < deadzone) {
+          look_axis[1] = 0.0f;
+        }
+        look_yaw = look_axis[0] * delta_seconds;
+        look_pitch = look_axis[1] * delta_seconds;
+      }
 
       Quaternion yaw_quat = angle_axis_to_quat((float4){0, 1, 0, look_yaw});
       hull_to_camera = normf3(qrotf3(yaw_quat, hull_to_camera));

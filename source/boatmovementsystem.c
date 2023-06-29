@@ -162,9 +162,15 @@ void tick_boat_movement_system(BoatMovementSystem *self,
         rotating = true;
       }
       if (input_comp->controller_count > 0) {
-        rotation_alpha =
-            clampf(input_comp->controller_states[0].left_stick[0], -1.0f, 1.0f);
-        rotating = true;
+        float a = -input_comp->controller_states[0].left_stick[0];
+        float deadzone = 0.15f;
+        if (a > -deadzone && a < deadzone) {
+          a = 0.0f;
+        }
+        rotation_alpha = clampf(a, -1.0f, 1.0f);
+        if (rotation_alpha != 0.0f) {
+          rotating = true;
+        }
       }
 
       const float accel_rate = 0.1f;
@@ -204,7 +210,7 @@ void tick_boat_movement_system(BoatMovementSystem *self,
         movement_axis = 1.0f;
       } else if (input_comp->controller_count > 0) {
         const TBGameControllerState *state = &input_comp->controller_states[0];
-        movement_axis = clampf(state->left_stick[1], -1.0f, 1.0f);
+        movement_axis = clampf(state->left_trigger, -1.0f, 1.0f);
       }
 
       if (movement_axis == 0) {

@@ -161,6 +161,11 @@ void tick_boat_movement_system(BoatMovementSystem *self,
         rotation_alpha = -1.0f;
         rotating = true;
       }
+      if (input_comp->controller_count > 0) {
+        rotation_alpha =
+            clampf(input_comp->controller_states[0].left_stick[0], -1.0f, 1.0f);
+        rotating = true;
+      }
 
       const float accel_rate = 0.1f;
       if (rotating) {
@@ -189,20 +194,20 @@ void tick_boat_movement_system(BoatMovementSystem *self,
 
     // Move boat forward based on angle compared to the wind direction
     {
-      // Project forward onto the XZ plane to get the forward we want to use for
-      // movement
+      // Project forward onto the XZ plane to get the forward we want to use
+      // for movement
       float3 mov_forward = transform_get_forward(&boat_transform->transform);
       mov_forward = normf3((float3){mov_forward[0], 0.0f, mov_forward[2]});
 
-      // Dot product between the boat heading and the wind direction to
-      // determine acceleration
-      float wind_alpha = dotf3(mov_forward, -wind_dir);
-
+      float movement_axis = 0.0f;
       if (input_comp->keyboard.key_W > 0) {
-        // Apply acceleration to velocity and then clamp based on max speed
-        float acceleration = lerpf(wind_alpha, 0.0f, 0.5f);
-        hull_comp->speed += 0.1f;
-      } else {
+        movement_axis = 1.0f;
+      } else if (input_comp->controller_count > 0) {
+        const TBGameControllerState *state = &input_comp->controller_states[0];
+        movement_axis = clampf(state->left_stick[1], -1.0f, 1.0f);
+      }
+
+      if (movement_axis == 0) {
         // Try to apply some drag if there's no input
         const float speed_threshold = 0.1f;
         const float drag = 0.1f;
@@ -213,6 +218,13 @@ void tick_boat_movement_system(BoatMovementSystem *self,
                    hull_comp->speed > -SDL_FLT_EPSILON) {
           hull_comp->speed = 0.0f;
         }
+      } else {
+        // Dot product between the boat heading and the wind direction to
+        // determine acceleration
+        float wind_alpha = dotf3(mov_forward, -wind_dir);
+        // Apply acceleration to velocity and then clamp based on max speed
+        float acceleration = lerpf(wind_alpha, 0.0f, 0.5f);
+        hull_comp->speed += 0.1f * movement_axis;
       }
 
       float3 velocity = mov_forward * hull_comp->speed;

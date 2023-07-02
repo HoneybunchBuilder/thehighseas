@@ -161,7 +161,7 @@ void tick_boat_movement_system(BoatMovementSystem *self,
         rotation_alpha = -1.0f;
         rotating = true;
       }
-      if (input_comp->controller_count > 0) {
+      if (!rotating && input_comp->controller_count > 0) {
         float a = -input_comp->controller_states[0].left_stick[0];
         float deadzone = 0.15f;
         if (a > -deadzone && a < deadzone) {

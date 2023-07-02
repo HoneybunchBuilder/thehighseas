@@ -109,8 +109,7 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
         float2 look_axis = input_comp->mouse.axis;
         look_yaw = look_axis[0] * delta_seconds * 5;
         look_pitch = look_axis[1] * delta_seconds * 5;
-      };
-      if (input_comp->controller_count > 0) {
+      } else if (input_comp->controller_count > 0) {
         const TBGameControllerState *ctl_state =
             &input_comp->controller_states[0];
         float2 look_axis = ctl_state->right_stick;

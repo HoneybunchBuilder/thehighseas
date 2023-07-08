@@ -137,7 +137,9 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     average_sample.binormal /= SAMPLE_COUNT;
     average_sample.binormal = normf3(average_sample.binormal);
 
-    hull_transform->transform.position[1] = average_sample.pos[1];
+    hull_transform->transform.position[1] =
+        lerpf(average_sample.pos[1], hull_transform->transform.position[1],
+              clampf(delta_seconds, 0.0f, 1.0f));
 
     float3 normal =
         normf3(crossf3(average_sample.tangent, average_sample.binormal));

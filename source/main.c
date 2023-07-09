@@ -26,6 +26,7 @@
 #include "skycomponent.h"
 #include "transformcomponent.h"
 
+#include "audiosystem.h"
 #include "boatcamerasystem.h"
 #include "boatmovementsystem.h"
 #include "camerasystem.h"
@@ -229,8 +230,13 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
       .tmp_alloc = arena.alloc,
   };
 
+  AudioSystemDescriptor audio_system_desc = {
+      .std_alloc = std_alloc.alloc,
+      .tmp_alloc = arena.alloc,
+  };
+
 // Order doesn't matter here
-#define SYSTEM_COUNT 20
+#define SYSTEM_COUNT 21
   SystemDescriptor system_descs[SYSTEM_COUNT] = {0};
   {
     uint32_t i = 0;
@@ -259,6 +265,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     tb_boat_camera_system_descriptor(&system_descs[i++], &boat_cam_system_desc);
     tb_boat_movement_system_descriptor(&system_descs[i++],
                                        &boat_mov_system_desc);
+    tb_audio_system_descriptor(&system_descs[i++], &audio_system_desc);
     TB_CHECK(i == SYSTEM_COUNT, "Incorrect number of systems");
   }
 
@@ -266,6 +273,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   SystemId init_order[SYSTEM_COUNT];
   {
     uint32_t i = 0;
+    init_order[i++] = AudioSystemId;
     init_order[i++] = RenderSystemId;
     init_order[i++] = InputSystemId;
     init_order[i++] = RenderTargetSystemId;
@@ -311,6 +319,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     tick_order[i++] = ImGuiSystemId;
     tick_order[i++] = RenderTargetSystemId;
     tick_order[i++] = RenderSystemId;
+    tick_order[i++] = AudioSystemId;
     TB_CHECK(i == SYSTEM_COUNT, "Incorrect number of systems");
   }
 

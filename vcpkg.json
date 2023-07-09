@@ -30,9 +30,7 @@
     },
     {
       "name": "sdl2-mixer",
-      "features": [
-        "opusfile"
-      ]
+      "default-features": false
     },
     "tracy",
     "volk",

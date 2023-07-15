@@ -143,6 +143,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   };
 
   CoreUISystemDescriptor coreui_system_desc = {
+      .std_alloc = std_alloc.alloc,
       .tmp_alloc = arena.alloc,
   };
 
@@ -275,6 +276,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     uint32_t i = 0;
     init_order[i++] = AudioSystemId;
     init_order[i++] = RenderSystemId;
+    init_order[i++] = CoreUISystemId;
     init_order[i++] = InputSystemId;
     init_order[i++] = RenderTargetSystemId;
     init_order[i++] = TextureSystemId;
@@ -292,7 +294,6 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     init_order[i++] = BoatMovementSystemId;
     init_order[i++] = ImGuiSystemId;
     init_order[i++] = NoClipControllerSystemId;
-    init_order[i++] = CoreUISystemId;
     init_order[i++] = TimeOfDaySystemId;
     TB_CHECK(i == SYSTEM_COUNT, "Incorrect number of systems");
   }

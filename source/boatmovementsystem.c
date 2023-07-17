@@ -1,6 +1,6 @@
 #include "boatmovementsystem.h"
 
-#include "inputcomponent.h"
+#include "inputsystem.h"
 #include "meshcomponent.h"
 #include "oceancomponent.h"
 #include "profiling.h"
@@ -15,9 +15,13 @@ bool create_boat_movement_system(BoatMovementSystem *self,
                                  System *const *system_deps) {
   VisualLoggingSystem *vlog =
       tb_get_system(system_deps, system_dep_count, VisualLoggingSystem);
+  InputSystem *input_system =
+      tb_get_system(system_deps, system_dep_count, InputSystem);
+
   *self = (BoatMovementSystem){
       .tmp_alloc = desc->tmp_alloc,
       .vlog = vlog,
+      .input = input_system,
   };
   return true;
 }
@@ -33,7 +37,7 @@ void tick_boat_movement_system(BoatMovementSystem *self,
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
   EntityId *hull_entities = tb_get_column_entity_ids(input, 1);
-  EntityId *ocean_entities = tb_get_column_entity_ids(input, 3);
+  EntityId *ocean_entities = tb_get_column_entity_ids(input, 2);
   uint32_t mov_entity_count = tb_get_column_component_count(input, 0);
   uint32_t hull_entity_count = tb_get_column_component_count(input, 1);
   if (mov_entity_count == 0 || mov_entity_count != hull_entity_count) {
@@ -46,15 +50,10 @@ void tick_boat_movement_system(BoatMovementSystem *self,
   const PackedComponentStore *hull_store =
       tb_get_column_check_id(input, 1, 1, HullComponentId);
 
-  const PackedComponentStore *input_store =
-      tb_get_column_check_id(input, 2, 0, InputComponentId);
-  const InputComponent *input_comp =
-      tb_get_component(input_store, 0, InputComponent);
-
   const PackedComponentStore *ocean_trans_store =
-      tb_get_column_check_id(input, 3, 0, TransformComponentId);
+      tb_get_column_check_id(input, 2, 0, TransformComponentId);
   const PackedComponentStore *ocean_store =
-      tb_get_column_check_id(input, 3, 1, OceanComponentId);
+      tb_get_column_check_id(input, 2, 1, OceanComponentId);
 
   const OceanComponent *ocean =
       tb_get_component(ocean_store, 0, OceanComponent);
@@ -155,16 +154,16 @@ void tick_boat_movement_system(BoatMovementSystem *self,
     {
       float rotation_alpha = 0.0f;
       bool rotating = false;
-      if (input_comp->keyboard.key_A == 1) {
+      if (self->input->keyboard.key_A == 1) {
         rotation_alpha = 1.0f;
         rotating = true;
       }
-      if (input_comp->keyboard.key_D == 1) {
+      if (self->input->keyboard.key_D == 1) {
         rotation_alpha = -1.0f;
         rotating = true;
       }
-      if (!rotating && input_comp->controller_count > 0) {
-        float a = -input_comp->controller_states[0].left_stick[0];
+      if (!rotating && self->input->controller_count > 0) {
+        float a = self->input->controller_states[0].left_stick[0];
         float deadzone = 0.15f;
         if (a > -deadzone && a < deadzone) {
           a = 0.0f;
@@ -208,10 +207,10 @@ void tick_boat_movement_system(BoatMovementSystem *self,
       mov_forward = normf3((float3){mov_forward[0], 0.0f, mov_forward[2]});
 
       float movement_axis = 0.0f;
-      if (input_comp->keyboard.key_W > 0) {
+      if (self->input->keyboard.key_W > 0) {
         movement_axis = 1.0f;
-      } else if (input_comp->controller_count > 0) {
-        const TBGameControllerState *state = &input_comp->controller_states[0];
+      } else if (self->input->controller_count > 0) {
+        const TBGameControllerState *state = &self->input->controller_states[0];
         movement_axis = clampf(state->left_trigger, -1.0f, 1.0f);
       }
 
@@ -289,13 +288,13 @@ void tb_boat_movement_system_descriptor(
       .size = sizeof(BoatMovementSystem),
       .id = BoatMovementSystemId,
       .desc = (InternalDescriptor)mov_desc,
-      .dep_count = 4,
+      .dep_count = 3,
       .deps[0] = {2, {TransformComponentId, BoatMovementComponentId}},
       .deps[1] = {2, {TransformComponentId, HullComponentId}},
-      .deps[2] = {1, {InputComponentId}},
-      .deps[3] = {2, {TransformComponentId, OceanComponentId}},
-      .system_dep_count = 1,
+      .deps[2] = {2, {TransformComponentId, OceanComponentId}},
+      .system_dep_count = 2,
       .system_deps[0] = VisualLoggingSystemId,
+      .system_deps[1] = InputSystemId,
       .create = tb_create_boat_movement_system,
       .destroy = tb_destroy_boat_movement_system,
       .tick = tb_tick_boat_movement_system,

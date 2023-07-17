@@ -5,6 +5,7 @@
 #define BoatMovementSystemId 0xDEADF005
 
 typedef struct SystemDescriptor SystemDescriptor;
+typedef struct InputSystem InputSystem;
 typedef struct VisualLoggingSystem VisualLoggingSystem;
 
 typedef struct BoatMovementSystemDescriptor {
@@ -14,6 +15,7 @@ typedef struct BoatMovementSystemDescriptor {
 typedef struct BoatMovementSystem {
   Allocator tmp_alloc;
   VisualLoggingSystem *vlog;
+  InputSystem *input;
 } BoatMovementSystem;
 
 void tb_boat_movement_system_descriptor(

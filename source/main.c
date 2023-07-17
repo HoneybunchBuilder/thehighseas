@@ -15,8 +15,6 @@
 #include "tbvma.h"
 
 #include "cameracomponent.h"
-#include "imguicomponent.h"
-#include "inputcomponent.h"
 #include "lightcomponent.h"
 #include "meshcomponent.h"
 #include "noclipcomponent.h"
@@ -109,7 +107,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
            "Failed to start render thread");
 
 // Order does not matter
-#define COMP_COUNT 14
+#define COMP_COUNT 12
   ComponentDescriptor component_descs[COMP_COUNT] = {0};
   {
     int32_t i = 0;
@@ -117,8 +115,6 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     tb_camera_component_descriptor(&component_descs[i++]);
     tb_directional_light_component_descriptor(&component_descs[i++]);
     tb_noclip_component_descriptor(&component_descs[i++]);
-    tb_input_component_descriptor(&component_descs[i++]);
-    tb_imgui_component_descriptor(&component_descs[i++]);
     tb_sky_component_descriptor(&component_descs[i++]);
     tb_mesh_component_descriptor(&component_descs[i++]);
     tb_ocean_component_descriptor(&component_descs[i++]);
@@ -148,6 +144,8 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   ImGuiSystemDescriptor imgui_system_desc = {
       .std_alloc = std_alloc.alloc,
       .tmp_alloc = arena.alloc,
+      .context_count = 1,
+      .context_atlases[0] = NULL,
   };
 
   SkySystemDescriptor sky_system_desc = {
@@ -274,7 +272,6 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     uint32_t i = 0;
     init_order[i++] = AudioSystemId;
     init_order[i++] = RenderSystemId;
-    init_order[i++] = CoreUISystemId;
     init_order[i++] = InputSystemId;
     init_order[i++] = RenderTargetSystemId;
     init_order[i++] = TextureSystemId;
@@ -283,14 +280,15 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     init_order[i++] = RenderPipelineSystemId;
     init_order[i++] = MaterialSystemId;
     init_order[i++] = MeshSystemId;
+    init_order[i++] = BoatCameraSystemId;
+    init_order[i++] = ImGuiSystemId;
+    init_order[i++] = CoreUISystemId;
     init_order[i++] = VisualLoggingSystemId;
+    init_order[i++] = BoatMovementSystemId;
     init_order[i++] = ShadowSystemId;
     init_order[i++] = SkySystemId;
     init_order[i++] = OceanSystemId;
     init_order[i++] = CameraSystemId;
-    init_order[i++] = BoatCameraSystemId;
-    init_order[i++] = BoatMovementSystemId;
-    init_order[i++] = ImGuiSystemId;
     init_order[i++] = NoClipControllerSystemId;
     init_order[i++] = TimeOfDaySystemId;
     TB_CHECK(i == SYSTEM_COUNT, "Incorrect number of systems");
@@ -341,24 +339,6 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   World world = {0};
   bool success = tb_create_world(&world_desc, &world);
   TB_CHECK_RETURN(success, "Failed to create world.", -1);
-
-  // Create entity with some default components
-  ImGuiComponentDescriptor imgui_comp_desc = {
-      .font_atlas = NULL,
-  };
-  const uint32_t core_comp_count = 2;
-  ComponentId core_comp_ids[2] = {InputComponentId, ImGuiComponentId};
-  InternalDescriptor core_comp_descs[2] = {
-      NULL,
-      &imgui_comp_desc,
-  };
-  EntityDescriptor entity_desc = {
-      .name = "Core",
-      .component_count = core_comp_count,
-      .component_ids = core_comp_ids,
-      .component_descriptors = core_comp_descs,
-  };
-  tb_world_add_entity(&world, &entity_desc);
 
   // Load first scene
   tb_world_load_scene(&world, "scenes/boat2.glb");

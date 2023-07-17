@@ -1,9 +1,11 @@
 {
   "files.associations": {
+    "*.rt": "hlsl",
     "*.hlsl": "c",
     "*.hlsli": "c",
     "*.hlsl.cs": "c",
     "*.hlsl.m": "c",
+    "cameracomponent.h": "c"
   },
   "cmake.configureOnOpen": false,
   "cmake.useCMakePresets": "auto",

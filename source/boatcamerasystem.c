@@ -1,7 +1,7 @@
 #include "boatcamerasystem.h"
 
 #include "cameracomponent.h"
-#include "inputcomponent.h"
+#include "inputsystem.h"
 #include "profiling.h"
 #include "sailingcomponents.h"
 #include "transformcomponent.h"
@@ -11,10 +11,12 @@ bool create_boat_camera_system(BoatCameraSystem *self,
                                const BoatCameraSystemDescriptor *desc,
                                uint32_t system_dep_count,
                                System *const *system_deps) {
-  (void)system_dep_count;
-  (void)system_deps;
+  InputSystem *input_system =
+      tb_get_system(system_deps, system_dep_count, InputSystem);
+
   *self = (BoatCameraSystem){
       .tmp_alloc = desc->tmp_alloc,
+      .input = input_system,
   };
   return true;
 }
@@ -44,12 +46,6 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
       tb_get_column_check_id(input, 0, 0, TransformComponentId);
   const PackedComponentStore *boat_cam_store =
       tb_get_column_check_id(input, 0, 1, BoatCameraComponentId);
-
-  const PackedComponentStore *input_store =
-      tb_get_column_check_id(input, 1, 0, InputComponentId);
-
-  const InputComponent *input_comp =
-      tb_get_component(input_store, 0, InputComponent);
 
   // Copy the boat camera component for output
   BoatCameraComponent *out_boat_cams =
@@ -95,7 +91,7 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
         target_dist = magf3(pos_hull_diff);
       }
 
-      target_dist += input_comp->mouse.wheel[1] * boat_cam->zoom_speed;
+      target_dist += self->input->mouse.wheel[1] * boat_cam->zoom_speed;
       target_dist = clampf(target_dist, boat_cam->min_dist, boat_cam->max_dist);
     }
 
@@ -104,14 +100,14 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
 
       float look_yaw = 0.0f;
       float look_pitch = 0.0f;
-      if (input_comp->mouse.left || input_comp->mouse.right ||
-          input_comp->mouse.middle) {
-        float2 look_axis = input_comp->mouse.axis;
+      if (self->input->mouse.left || self->input->mouse.right ||
+          self->input->mouse.middle) {
+        float2 look_axis = self->input->mouse.axis;
         look_yaw = look_axis[0] * delta_seconds * 5;
         look_pitch = look_axis[1] * delta_seconds * 5;
-      } else if (input_comp->controller_count > 0) {
+      } else if (self->input->controller_count > 0) {
         const TBGameControllerState *ctl_state =
-            &input_comp->controller_states[0];
+            &self->input->controller_states[0];
         float2 look_axis = ctl_state->right_stick;
         float deadzone = 0.15f;
         if (look_axis[0] > -deadzone && look_axis[0] < deadzone) {
@@ -170,11 +166,12 @@ void tb_boat_camera_system_descriptor(
       .size = sizeof(BoatCameraSystem),
       .id = BoatCameraSystemId,
       .desc = (InternalDescriptor)cam_desc,
-      .dep_count = 2,
+      .dep_count = 1,
       .deps[0] = {3,
                   {TransformComponentId, BoatCameraComponentId,
                    CameraComponentId}},
-      .deps[1] = {1, {InputComponentId}},
+      .system_dep_count = 1,
+      .system_deps[0] = InputSystemId,
       .create = tb_create_boat_camera_system,
       .destroy = tb_destroy_boat_camera_system,
       .tick = tb_tick_boat_camera_system,

@@ -1,0 +1,27 @@
+"AppBuild"
+{
+  "AppID" "2213960"
+  "Desc" "v0.1.0"
+  "SetLive" "prerelease" 
+  "ContentRoot" "..\build\x64\windows\Release"
+  "BuildOutput" "..\output\"
+
+  "Depots"
+  {
+    "2213964" // Windows Depot is 4
+    {
+      // Include everything generated
+      "FileMapping"
+      {
+        "LocalPath" "*"
+        "DepotPath" "."
+        "recursive" 1
+      }
+      // But exclude some things we know we never want
+      "FileExclusion" "*.pdb"
+      "FileExclusion" "*.h"
+      "FileExclusion" "*.ini"
+      "FileExclusion" "*.cache"
+    }
+  }
+}

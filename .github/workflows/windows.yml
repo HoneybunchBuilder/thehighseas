@@ -83,12 +83,5 @@ jobs:
       working-directory: ./thehighseas
       run: cmake --build --preset release-x64-windows-ninja-llvm
 
-    - uses: game-ci/steam-deploy@v3
-      with:
-        username: ${{ secrets.STEAM_USERNAME }}
-        configVdf: ${{ secrets.STEAM_CONFIG_VDF}}
-        appId: ${{ secrets.STEAM_APP_ID }}
-        buildDescription: v0.1.0
-        rootPath: thehighseas/build/x64/windows
-        depot4Path: Release
-        releaseBranch: prerelease
+    - name: Upload to Steam Prerelease
+      run: steamcmd +login ${{ secrets.STEAM_USERNAME }} +run_app_build steam/windows.vdf +quit

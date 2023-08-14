@@ -1,0 +1,27 @@
+"AppBuild"
+{
+  "AppID" "2213960"
+  "Desc" "v0.1.0"
+  "SetLive" "prerelease" 
+  "ContentRoot" "..\build\arm64\macos-llvm\Release"
+  "BuildOutput" "..\output\"
+
+  "Depots"
+  {
+    "2213963" // MacOS Depot is 3
+    {
+      // Include everything generated
+      "FileMapping"
+      {
+        "LocalPath" "*"
+        "DepotPath" "."
+        "recursive" 1
+      }
+      // But exclude some things we know we never want
+      "FileExclusion" "*.pdb"
+      "FileExclusion" "*.h"
+      "FileExclusion" "*.ini"
+      "FileExclusion" "*.cache"
+    }
+  }
+}

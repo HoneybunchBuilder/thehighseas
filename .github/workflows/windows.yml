@@ -84,5 +84,4 @@ jobs:
       run: cmake --build --preset release-x64-windows-ninja-llvm
 
     - name: Upload to Steam Prerelease
-      working-directory: ./thehighseas
-      run: steamcmd +login ${{ secrets.STEAM_USERNAME }} +run_app_build steam/windows.vdf +quit
+      run: steamcmd +login ${{ secrets.STEAM_USERNAME }} +run_app_build ${{ github.workspace }}/thehighseas/steam/windows.vdf +quit

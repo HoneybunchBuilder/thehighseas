@@ -81,4 +81,4 @@ jobs:
 
     - name: Upload to Steam Prerelease
       working-directory: ./thehighseas
-      run: steamcmd +login ${{ secrets.STEAM_USERNAME }} +run_app_build steam/linux.vdf +quit
+      run: steamcmd +login ${{ secrets.STEAM_USERNAME }} +run_app_build ${{ github.workspace }}/thehighseas/steam/linux.vdf +quit

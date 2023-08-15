@@ -81,4 +81,5 @@ jobs:
       run: cmake --build --preset release-arm64-macos-ninja-llvm
 
     - name: Upload to Steam Prerelease
+      working-directory: ./thehighseas
       run: steamcmd +login ${{ secrets.STEAM_USERNAME }} +run_app_build steam/macos.vdf +quit

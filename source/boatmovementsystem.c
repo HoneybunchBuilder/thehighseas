@@ -9,6 +9,8 @@
 #include "visualloggingsystem.h"
 #include "world.h"
 
+#include <SDL2/SDL_log.h>
+
 bool create_boat_movement_system(BoatMovementSystem *self,
                                  const BoatMovementSystemDescriptor *desc,
                                  uint32_t system_dep_count,
@@ -30,9 +32,13 @@ void destroy_boat_movement_system(BoatMovementSystem *self) {
   *self = (BoatMovementSystem){0};
 }
 
-void tick_boat_movement_system(BoatMovementSystem *self,
-                               const SystemInput *input, SystemOutput *output,
-                               float delta_seconds) {
+TB_DEFINE_SYSTEM(boat_movement, BoatMovementSystem,
+                 BoatMovementSystemDescriptor)
+
+void tick_boat_movement_system_internal(BoatMovementSystem *self,
+                                        const SystemInput *input,
+                                        SystemOutput *output,
+                                        float delta_seconds) {
   TracyCZoneN(ctx, "Boat Movement System Tick", true);
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
@@ -278,8 +284,12 @@ void tick_boat_movement_system(BoatMovementSystem *self,
   TracyCZoneEnd(ctx);
 }
 
-TB_DEFINE_SYSTEM(boat_movement, BoatMovementSystem,
-                 BoatMovementSystemDescriptor)
+void tick_boat_movement_system(void *self, const SystemInput *input,
+                               SystemOutput *output, float delta_seconds) {
+  SDL_LogDebug(SDL_LOG_CATEGORY_SYSTEM, "Tick Boat Movement System");
+  tick_boat_movement_system_internal((BoatMovementSystem *)self, input, output,
+                                     delta_seconds);
+}
 
 void tb_boat_movement_system_descriptor(
     SystemDescriptor *desc, const BoatMovementSystemDescriptor *mov_desc) {
@@ -288,15 +298,19 @@ void tb_boat_movement_system_descriptor(
       .size = sizeof(BoatMovementSystem),
       .id = BoatMovementSystemId,
       .desc = (InternalDescriptor)mov_desc,
-      .dep_count = 3,
-      .deps[0] = {2, {TransformComponentId, BoatMovementComponentId}},
-      .deps[1] = {2, {TransformComponentId, HullComponentId}},
-      .deps[2] = {2, {TransformComponentId, OceanComponentId}},
       .system_dep_count = 2,
       .system_deps[0] = VisualLoggingSystemId,
       .system_deps[1] = InputSystemId,
       .create = tb_create_boat_movement_system,
       .destroy = tb_destroy_boat_movement_system,
-      .tick = tb_tick_boat_movement_system,
-  };
+      .tick_fn_count = 1,
+      .tick_fns[0] = {
+          .dep_count = 3,
+          .deps[0] = {2, {TransformComponentId, BoatMovementComponentId}},
+          .deps[1] = {2, {TransformComponentId, HullComponentId}},
+          .deps[2] = {2, {TransformComponentId, OceanComponentId}},
+          .system_id = BoatMovementSystemId,
+          .order = E_TICK_POST_INPUT,
+          .function = tick_boat_movement_system,
+      }};
 }

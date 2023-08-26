@@ -7,6 +7,8 @@
 #include "transformcomponent.h"
 #include "world.h"
 
+#include <SDL2/SDL_log.h>
+
 bool create_boat_camera_system(BoatCameraSystem *self,
                                const BoatCameraSystemDescriptor *desc,
                                uint32_t system_dep_count,
@@ -25,15 +27,14 @@ void destroy_boat_camera_system(BoatCameraSystem *self) {
   *self = (BoatCameraSystem){0};
 }
 
-void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
-                             SystemOutput *output, float delta_seconds) {
+TB_DEFINE_SYSTEM(boat_camera, BoatCameraSystem, BoatCameraSystemDescriptor)
+
+void tick_boat_camera_system_internal(BoatCameraSystem *self,
+                                      const SystemInput *input,
+                                      SystemOutput *output,
+                                      float delta_seconds) {
   TracyCZoneN(ctx, "Boat Camera System Tick", true);
   TracyCZoneColor(ctx, TracyCategoryColorGame);
-
-  (void)self;
-  (void)input;
-  (void)output;
-  (void)delta_seconds;
 
   EntityId *entities = tb_get_column_entity_ids(input, 0);
   uint32_t entity_count = tb_get_column_component_count(input, 0);
@@ -157,7 +158,12 @@ void tick_boat_camera_system(BoatCameraSystem *self, const SystemInput *input,
   TracyCZoneEnd(ctx);
 }
 
-TB_DEFINE_SYSTEM(boat_camera, BoatCameraSystem, BoatCameraSystemDescriptor)
+void tick_boat_camera_system(void *self, const SystemInput *input,
+                             SystemOutput *output, float delta_seconds) {
+  SDL_LogDebug(SDL_LOG_CATEGORY_SYSTEM, "Tick Boat Camera System");
+  tick_boat_camera_system_internal((BoatCameraSystem *)self, input, output,
+                                   delta_seconds);
+}
 
 void tb_boat_camera_system_descriptor(
     SystemDescriptor *desc, const BoatCameraSystemDescriptor *cam_desc) {
@@ -166,14 +172,20 @@ void tb_boat_camera_system_descriptor(
       .size = sizeof(BoatCameraSystem),
       .id = BoatCameraSystemId,
       .desc = (InternalDescriptor)cam_desc,
-      .dep_count = 1,
-      .deps[0] = {3,
-                  {TransformComponentId, BoatCameraComponentId,
-                   CameraComponentId}},
       .system_dep_count = 1,
       .system_deps[0] = InputSystemId,
       .create = tb_create_boat_camera_system,
       .destroy = tb_destroy_boat_camera_system,
-      .tick = tb_tick_boat_camera_system,
+      .tick_fn_count = 1,
+      .tick_fns[0] =
+          {
+              .dep_count = 1,
+              .deps[0] = {3,
+                          {TransformComponentId, BoatCameraComponentId,
+                           CameraComponentId}},
+              .system_id = BoatCameraSystemId,
+              .order = E_TICK_POST_INPUT,
+              .function = tick_boat_camera_system,
+          },
   };
 }

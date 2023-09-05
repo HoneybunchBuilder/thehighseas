@@ -133,23 +133,19 @@ void tick_boat_movement_system_internal(BoatMovementSystem *self,
       OceanSample sample =
           tb_sample_ocean(ocean, out_ocean_trans, (float2){point[0], point[2]});
       average_sample.pos += sample.pos;
-      average_sample.tangent += sample.tangent;
-      average_sample.binormal += sample.binormal;
+      average_sample.normal += sample.normal;
     }
     average_sample.pos /= SAMPLE_COUNT;
-    average_sample.tangent /= SAMPLE_COUNT;
-    average_sample.tangent = normf3(average_sample.tangent);
-    average_sample.binormal /= SAMPLE_COUNT;
-    average_sample.binormal = normf3(average_sample.binormal);
+    average_sample.normal /= SAMPLE_COUNT;
+    average_sample.normal = normf3(average_sample.normal);
 
     hull_transform->transform.position[1] =
         lerpf(average_sample.pos[1], hull_transform->transform.position[1],
               clampf(delta_seconds, 0.0f, 1.0f));
 
-    float3 normal =
-        normf3(crossf3(average_sample.tangent, average_sample.binormal));
+    float3 tangent = normf3(crossf3(average_sample.normal, TB_RIGHT));
     Quaternion rot = mf33_to_quat(
-        m44tom33(look_at((float3){0}, average_sample.binormal, normal)));
+        m44tom33(look_at((float3){0}, tangent, average_sample.normal)));
 
     hull_transform->transform.rotation =
         slerp(hull_transform->transform.rotation, rot,

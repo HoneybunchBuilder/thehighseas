@@ -9,65 +9,28 @@
 
 #include <SDL2/SDL_log.h>
 
-bool create_boat_camera_system(BoatCameraSystem *self,
-                               const BoatCameraSystemDescriptor *desc,
-                               uint32_t system_dep_count,
-                               System *const *system_deps) {
-  InputSystem *input_system =
-      tb_get_system(system_deps, system_dep_count, InputSystem);
+#include <flecs.h>
 
-  *self = (BoatCameraSystem){
-      .tmp_alloc = desc->tmp_alloc,
-      .input = input_system,
-  };
-  return true;
-}
-
-void destroy_boat_camera_system(BoatCameraSystem *self) {
-  *self = (BoatCameraSystem){0};
-}
-
-TB_DEFINE_SYSTEM(boat_camera, BoatCameraSystem, BoatCameraSystemDescriptor)
-
-void tick_boat_camera_system_internal(BoatCameraSystem *self,
-                                      const SystemInput *input,
-                                      SystemOutput *output,
-                                      float delta_seconds) {
-  TracyCZoneN(ctx, "Boat Camera System Tick", true);
+void boat_camera_update_tick(ecs_iter_t *it) {
+  TracyCZoneN(ctx, "Boat Camera Update System", true);
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
-  EntityId *entities = tb_get_column_entity_ids(input, 0);
-  uint32_t entity_count = tb_get_column_component_count(input, 0);
-  if (entity_count == 0) {
-    TracyCZoneEnd(ctx);
-    return;
-  }
+  ecs_world_t *ecs = it->world;
+  ECS_COMPONENT(ecs, InputSystem);
 
-  const PackedComponentStore *transform_store =
-      tb_get_column_check_id(input, 0, 0, TransformComponentId);
-  const PackedComponentStore *boat_cam_store =
-      tb_get_column_check_id(input, 0, 1, BoatCameraComponentId);
+  const InputSystem *input = ecs_singleton_get(ecs, InputSystem);
 
-  // Copy the boat camera component for output
-  BoatCameraComponent *out_boat_cams =
-      tb_alloc_nm_tp(self->tmp_alloc, entity_count, BoatCameraComponent);
-  SDL_memcpy(out_boat_cams, boat_cam_store->components,
-             entity_count * sizeof(BoatCameraComponent));
+  TransformComponent *transforms = ecs_field(it, TransformComponent, 1);
+  BoatCameraComponent *boat_cameras = ecs_field(it, BoatCameraComponent, 2);
 
-  // Make a copy of the transform input as the output
-  TransformComponent *out_transforms =
-      tb_alloc_nm_tp(self->tmp_alloc, entity_count, TransformComponent);
-  SDL_memcpy(out_transforms, transform_store->components,
-             entity_count * sizeof(TransformComponent));
-
-  for (uint32_t i = 0; i < entity_count; ++i) {
+  for (int32_t i = 0; i < it->count; ++i) {
     // Get parent transform to determine where the parent boat hull is that we
     // want to focus on
-    TransformComponent *transform_comp = &out_transforms[i];
-    BoatCameraComponent *boat_cam = &out_boat_cams[i];
+    TransformComponent *transform_comp = &transforms[i];
+    BoatCameraComponent *boat_cam = &boat_cameras[i];
 
-    TransformComponent *hull_transform_comp =
-        tb_transform_get_parent(transform_comp);
+    const TransformComponent *hull_transform_comp =
+        tb_transform_get_parent(ecs, transform_comp);
     float3 hull_pos = hull_transform_comp->transform.position;
 
     boat_cam->target_center = hull_pos;
@@ -92,7 +55,7 @@ void tick_boat_camera_system_internal(BoatCameraSystem *self,
         target_dist = magf3(pos_hull_diff);
       }
 
-      target_dist += self->input->mouse.wheel[1] * boat_cam->zoom_speed;
+      target_dist += input->mouse.wheel[1] * boat_cam->zoom_speed;
       target_dist = clampf(target_dist, boat_cam->min_dist, boat_cam->max_dist);
     }
 
@@ -101,14 +64,12 @@ void tick_boat_camera_system_internal(BoatCameraSystem *self,
 
       float look_yaw = 0.0f;
       float look_pitch = 0.0f;
-      if (self->input->mouse.left || self->input->mouse.right ||
-          self->input->mouse.middle) {
-        float2 look_axis = self->input->mouse.axis;
-        look_yaw = look_axis[0] * delta_seconds * 5;
-        look_pitch = look_axis[1] * delta_seconds * 5;
-      } else if (self->input->controller_count > 0) {
-        const TBGameControllerState *ctl_state =
-            &self->input->controller_states[0];
+      if (input->mouse.left || input->mouse.right || input->mouse.middle) {
+        float2 look_axis = input->mouse.axis;
+        look_yaw = look_axis[0] * it->delta_time * 5;
+        look_pitch = look_axis[1] * it->delta_time * 5;
+      } else if (input->controller_count > 0) {
+        const TBGameControllerState *ctl_state = &input->controller_states[0];
         float2 look_axis = ctl_state->right_stick;
         float deadzone = 0.15f;
         if (look_axis[0] > -deadzone && look_axis[0] < deadzone) {
@@ -117,8 +78,8 @@ void tick_boat_camera_system_internal(BoatCameraSystem *self,
         if (look_axis[1] > -deadzone && look_axis[1] < deadzone) {
           look_axis[1] = 0.0f;
         }
-        look_yaw = look_axis[0] * delta_seconds;
-        look_pitch = look_axis[1] * delta_seconds;
+        look_yaw = look_axis[0] * it->delta_time;
+        look_pitch = look_axis[1] * it->delta_time;
       }
 
       Quaternion yaw_quat = angle_axis_to_quat((float4){0, 1, 0, look_yaw});
@@ -140,52 +101,28 @@ void tick_boat_camera_system_internal(BoatCameraSystem *self,
         m44tom33(look_at(transform_comp->transform.position, hull_pos, TB_UP)));
   }
 
-  // Report output
-  output->set_count = 2;
-  output->write_sets[0] = (SystemWriteSet){
-      .id = BoatCameraComponentId,
-      .count = entity_count,
-      .components = (uint8_t *)out_boat_cams,
-      .entities = entities,
-  };
-  output->write_sets[1] = (SystemWriteSet){
-      .id = TransformComponentId,
-      .count = entity_count,
-      .components = (uint8_t *)out_transforms,
-      .entities = entities,
-  };
-
   TracyCZoneEnd(ctx);
 }
 
-void tick_boat_camera_system(void *self, const SystemInput *input,
-                             SystemOutput *output, float delta_seconds) {
-  SDL_LogDebug(SDL_LOG_CATEGORY_SYSTEM, "Tick Boat Camera System");
-  tick_boat_camera_system_internal((BoatCameraSystem *)self, input, output,
-                                   delta_seconds);
+void ths_register_boat_camera_sys(TbWorld *world) {
+  ecs_world_t *ecs = world->ecs;
+  ECS_COMPONENT(ecs, BoatCameraSystem);
+  ECS_COMPONENT(ecs, TransformComponent);
+  ECS_COMPONENT(ecs, BoatCameraComponent);
+
+  BoatCameraSystem sys = {
+      .tmp_alloc = world->tmp_alloc,
+  };
+  ecs_set_ptr(ecs, ecs_id(BoatCameraSystem), BoatCameraSystem, &sys);
+
+  ECS_SYSTEM(ecs, boat_camera_update_tick, EcsOnUpdate, TransformComponent,
+             BoatCameraComponent)
 }
 
-void tb_boat_camera_system_descriptor(
-    SystemDescriptor *desc, const BoatCameraSystemDescriptor *cam_desc) {
-  *desc = (SystemDescriptor){
-      .name = "BoatCamera",
-      .size = sizeof(BoatCameraSystem),
-      .id = BoatCameraSystemId,
-      .desc = (InternalDescriptor)cam_desc,
-      .system_dep_count = 1,
-      .system_deps[0] = InputSystemId,
-      .create = tb_create_boat_camera_system,
-      .destroy = tb_destroy_boat_camera_system,
-      .tick_fn_count = 1,
-      .tick_fns[0] =
-          {
-              .dep_count = 1,
-              .deps[0] = {3,
-                          {TransformComponentId, BoatCameraComponentId,
-                           CameraComponentId}},
-              .system_id = BoatCameraSystemId,
-              .order = E_TICK_POST_INPUT,
-              .function = tick_boat_camera_system,
-          },
-  };
+void ths_unregister_boat_camera_sys(TbWorld *world) {
+  ecs_world_t *ecs = world->ecs;
+  ECS_COMPONENT(ecs, BoatCameraSystem);
+  BoatCameraSystem *sys = ecs_singleton_get_mut(ecs, BoatCameraSystem);
+  *sys = (BoatCameraSystem){0};
+  ecs_singleton_remove(ecs, BoatCameraSystem);
 }

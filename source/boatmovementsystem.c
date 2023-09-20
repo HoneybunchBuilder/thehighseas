@@ -136,7 +136,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
         rotating = true;
       }
       if (!rotating && input->controller_count > 0) {
-        float a = input->controller_states[0].left_stick[0];
+        float a = -input->controller_states[0].left_stick[0];
         float deadzone = 0.15f;
         if (a > -deadzone && a < deadzone) {
           a = 0.0f;

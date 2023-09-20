@@ -13,6 +13,8 @@
 #define BoatCameraComponentId 0xDEAD0004
 #define BoatCameraComponentIdStr "0xDEAD0004"
 
+typedef struct TbWorld TbWorld;
+
 typedef struct MeshComponent MeshComponent;
 typedef struct TransformComponent TransformComponent;
 
@@ -44,14 +46,6 @@ typedef struct BoatMovementComponent {
   float friction; // How fast the boat will come to a stop
 } BoatMovementComponent;
 
-typedef struct BoatMovementComponentDesc {
-  float heading_change_speed;
-  float max_acceleration;
-  float max_speed;
-  float inertia;
-  float friction;
-} BoatMovementComponentDesc;
-
 typedef struct HullComponent {
   float bouyancy; // How fast the hull will lerp to the target height
   // Filled in via on_loaded
@@ -64,22 +58,10 @@ typedef struct HullComponent {
   float heading_velocity; // how fast the heading changes
 } HullComponent;
 
-typedef struct HullComponentDesc {
-  float bouyancy;
-} HullComponentDesc;
-
 typedef struct MastComponent {
   float heading_change_speed; // How fast the mast will face the target heading
   float3 target_heading;      // Direction we want the mast to face
 } MastComponent;
-
-typedef struct BoatCameraComponentDesc {
-  float min_dist;
-  float max_dist;
-  float move_speed;
-  float zoom_speed;
-  float pitch_limit;
-} BoatCameraComponentDesc;
 
 typedef struct BoatCameraComponent {
   float min_dist;
@@ -93,10 +75,4 @@ typedef struct BoatCameraComponent {
   float3 target_hull_to_camera;
 } BoatCameraComponent;
 
-typedef struct ComponentDescriptor ComponentDescriptor;
-
-void tb_wind_component_descriptor(ComponentDescriptor *desc);
-void tb_boat_movement_component_descriptor(ComponentDescriptor *desc);
-void tb_hull_component_descriptor(ComponentDescriptor *desc);
-void tb_mast_component_descriptor(ComponentDescriptor *desc);
-void tb_boat_camera_component_descriptor(ComponentDescriptor *desc);
+void ths_register_sailing_components(TbWorld *world);

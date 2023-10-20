@@ -169,6 +169,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
           mulq(boat_transform->transform.rotation,
                angle_axis_to_quat(
                    (float4){0, 1, 0, hull->heading_velocity * it->delta_time}));
+      tb_transform_mark_dirty(ecs, boat_transform);
     }
 
     // Move boat forward based on angle compared to the wind direction
@@ -211,6 +212,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
       }
 
       boat_transform->transform.position += velocity * it->delta_time;
+      tb_transform_mark_dirty(ecs, boat_transform);
     }
   }
 

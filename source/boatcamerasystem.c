@@ -66,20 +66,20 @@ void boat_camera_update_tick(ecs_iter_t *it) {
       float look_pitch = 0.0f;
       if (input->mouse.left || input->mouse.right || input->mouse.middle) {
         float2 look_axis = input->mouse.axis;
-        look_yaw = look_axis[0] * it->delta_time * 5;
-        look_pitch = look_axis[1] * it->delta_time * 5;
+        look_yaw = look_axis.x * it->delta_time * 5;
+        look_pitch = look_axis.y * it->delta_time * 5;
       } else if (input->controller_count > 0) {
         const TBGameControllerState *ctl_state = &input->controller_states[0];
         float2 look_axis = ctl_state->right_stick;
         float deadzone = 0.15f;
-        if (look_axis[0] > -deadzone && look_axis[0] < deadzone) {
-          look_axis[0] = 0.0f;
+        if (look_axis.x > -deadzone && look_axis.x < deadzone) {
+          look_axis.x = 0.0f;
         }
-        if (look_axis[1] > -deadzone && look_axis[1] < deadzone) {
-          look_axis[1] = 0.0f;
+        if (look_axis.y > -deadzone && look_axis.y < deadzone) {
+          look_axis.y = 0.0f;
         }
-        look_yaw = look_axis[0] * it->delta_time;
-        look_pitch = look_axis[1] * it->delta_time;
+        look_yaw = look_axis.x * it->delta_time;
+        look_pitch = look_axis.y * it->delta_time;
       }
 
       Quaternion yaw_quat = angle_axis_to_quat((float4){0, 1, 0, look_yaw});

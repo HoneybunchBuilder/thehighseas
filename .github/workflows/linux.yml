@@ -17,7 +17,6 @@ jobs:
       matrix:
         toolsets: [
           {host: [Linux, X64, self-hosted], preset: x64-linux-ninja-llvm},
-          {host: [Linux, X64, self-hosted], preset: x64-linux-ninja-gcc},
         ]
 
     name: ${{matrix.toolsets.preset}} on ${{matrix.toolsets.host[0]}}

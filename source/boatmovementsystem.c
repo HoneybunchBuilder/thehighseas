@@ -95,11 +95,11 @@ void boat_movement_update_tick(ecs_iter_t *it) {
     OceanSample average_sample = {.pos = {0}};
     for (uint32_t i = 0; i < SAMPLE_COUNT; ++i) {
       const float3 point = sample_points[i];
-      tb_vlog_location(vlog, (float3){point[0], 10.0f, point[2]}, 0.4f,
-                       normf3((float3){point[0], 0, point[1]}));
+      tb_vlog_location(vlog, f3(point.x, 10.0f, point.z), 0.4f,
+                       normf3(f3(point.x, 0, point.z)));
 
-      OceanSample sample = tb_sample_ocean(ocean, ecs, ocean_transform,
-                                           (float2){point[0], point[2]});
+      OceanSample sample =
+          tb_sample_ocean(ocean, ecs, ocean_transform, point.xz);
       average_sample.pos += sample.pos;
       average_sample.tangent += sample.tangent;
       average_sample.binormal += sample.binormal;
@@ -136,7 +136,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
         rotating = true;
       }
       if (!rotating && input->controller_count > 0) {
-        float a = -input->controller_states[0].left_stick[0];
+        float a = -input->controller_states[0].left_stick.x;
         float deadzone = 0.15f;
         if (a > -deadzone && a < deadzone) {
           a = 0.0f;
@@ -177,7 +177,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
       // Project forward onto the XZ plane to get the forward we want to use
       // for movement
       float3 mov_forward = transform_get_forward(&boat_transform->transform);
-      mov_forward = normf3((float3){mov_forward[0], 0.0f, mov_forward[2]});
+      mov_forward = normf3((float3){mov_forward.x, 0.0f, mov_forward.z});
 
       float movement_axis = 0.0f;
       if (input->keyboard.key_W > 0) {

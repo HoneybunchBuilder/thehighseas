@@ -30,6 +30,7 @@
 #include "coreuisystem.h"
 #include "imguisystem.h"
 #include "inputsystem.h"
+#include "mainmenu.h"
 #include "materialsystem.h"
 #include "meshsystem.h"
 #include "noclipcontrollersystem.h"
@@ -116,9 +117,10 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   // Attach game specifc systems to the world
   ths_register_boat_movement_sys(&world);
   ths_register_boat_camera_sys(&world);
+  ths_register_main_menu_sys(&world);
 
   // Load first scene
-  tb_load_scene(&world, "scenes/boat2.glb");
+  tb_load_scene(&world, "scenes/mainmenu.glb");
 
   // Main loop
   bool running = true;
@@ -164,6 +166,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   // Stop the render thread before we start destroying render objects
   tb_stop_render_thread(render_thread);
 
+  ths_unregister_main_menu_sys(&world);
   ths_unregister_boat_camera_sys(&world);
   ths_unregister_boat_movement_sys(&world);
   tb_destroy_world(&world);

@@ -11,6 +11,8 @@
 
 ECS_SYSTEM_DECLARE(main_menu_tick);
 
+TbWorld *mm_world = NULL;
+
 void main_menu_tick(ecs_iter_t *it) {
   ecs_world_t *ecs = it->world;
   ECS_COMPONENT(ecs, GameSceneSettings);
@@ -20,7 +22,7 @@ void main_menu_tick(ecs_iter_t *it) {
   TB_CHECK(it->count <= 1, "More game state objects than expected");
   // Do nothing if we're not in the main menu
   if (it->count == 0 || gss->type != THS_GS_MAIN_MENU) {
-    ecs_enable(ecs, ecs_id(main_menu_tick), false);
+    ecs_enable_id(ecs, it->entities[0], ecs_id(GameSceneSettings), false);
     return;
   }
 
@@ -62,6 +64,10 @@ void main_menu_tick(ecs_iter_t *it) {
         igNewLine();
         if (igButton("New Game", size)) {
           // Fade to back and begin new game
+          ecs_defer_suspend(ecs);
+          tb_clear_world(mm_world);
+          tb_load_scene(mm_world, "scenes/boat2.glb");
+          ecs_defer_resume(ecs);
         }
         igNewLine();
         if (igButton("Load Game", size)) {
@@ -88,15 +94,28 @@ void main_menu_tick(ecs_iter_t *it) {
 }
 
 void ths_register_main_menu_sys(TbWorld *world) {
+  mm_world = world;
+
   ecs_world_t *ecs = world->ecs;
   ECS_COMPONENT(ecs, GameSceneSettings);
 
   ths_register_game_state_components(world);
 
-  ECS_SYSTEM_DEFINE(ecs, main_menu_tick, EcsOnUpdate, GameSceneSettings);
+  ecs_system(
+      ecs, {
+               .entity = ecs_entity(ecs, {.id = ecs_id(main_menu_tick),
+                                          .name = "Main Menu Tick",
+                                          .add = {ecs_dependson(EcsOnUpdate)}}),
+               .query.filter.terms =
+                   {
+                       {.id = ecs_id(GameSceneSettings)},
+                   },
+               .callback = main_menu_tick,
+               .no_readonly = true // disable readonly mode for this system
+           });
 }
 
 void ths_unregister_main_menu_sys(TbWorld *world) {
-  // Nothing to do... for now
   (void)world;
+  mm_world = NULL;
 }

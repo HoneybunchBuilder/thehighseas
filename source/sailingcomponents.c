@@ -29,8 +29,8 @@ BoatMovementComponent deserialize_boat_movement_component(json_object *json) {
   return comp;
 }
 
-HullComponent deserialize_hull_component(json_object *json) {
-  HullComponent comp = {0};
+ThsHullComponent deserialize_hull_component(json_object *json) {
+  ThsHullComponent comp = {0};
   json_object_object_foreach(json, key, value) {
     if (SDL_strcmp(key, "bouyancy") == 0) {
       comp.bouyancy = (float)json_object_get_double(value);
@@ -39,8 +39,8 @@ HullComponent deserialize_hull_component(json_object *json) {
   return comp;
 }
 
-BoatCameraComponent deserialize_boat_camera_component(json_object *json) {
-  BoatCameraComponent comp = {0};
+TbBoatCameraComponent deserialize_boat_camera_component(json_object *json) {
+  TbBoatCameraComponent comp = {0};
   json_object_object_foreach(json, key, value) {
     if (SDL_strcmp(key, "min_dist") == 0) {
       comp.min_dist = (float)json_object_get_double(value);
@@ -73,14 +73,14 @@ bool create_sailing_components(ecs_world_t *ecs, ecs_entity_t e,
           ecs_set_ptr(ecs, e, BoatMovementComponent, &comp);
         }
         if (SDL_strcmp(id_str, HullComponentIdStr) == 0) {
-          ECS_COMPONENT(ecs, HullComponent);
-          HullComponent comp = deserialize_hull_component(extra);
-          ecs_set_ptr(ecs, e, HullComponent, &comp);
+          ECS_COMPONENT(ecs, ThsHullComponent);
+          ThsHullComponent comp = deserialize_hull_component(extra);
+          ecs_set_ptr(ecs, e, ThsHullComponent, &comp);
         }
         if (SDL_strcmp(id_str, BoatCameraComponentIdStr) == 0) {
-          ECS_COMPONENT(ecs, BoatCameraComponent);
-          BoatCameraComponent comp = deserialize_boat_camera_component(extra);
-          ecs_set_ptr(ecs, e, BoatCameraComponent, &comp);
+          ECS_COMPONENT(ecs, TbBoatCameraComponent);
+          TbBoatCameraComponent comp = deserialize_boat_camera_component(extra);
+          ecs_set_ptr(ecs, e, TbBoatCameraComponent, &comp);
         }
       }
     }
@@ -90,8 +90,8 @@ bool create_sailing_components(ecs_world_t *ecs, ecs_entity_t e,
 
 void destroy_sailing_components(ecs_world_t *ecs) {
   ECS_COMPONENT(ecs, BoatMovementComponent);
-  ECS_COMPONENT(ecs, HullComponent);
-  ECS_COMPONENT(ecs, BoatCameraComponent);
+  ECS_COMPONENT(ecs, ThsHullComponent);
+  ECS_COMPONENT(ecs, TbBoatCameraComponent);
 
   {
     ecs_filter_t *filter =
@@ -115,14 +115,14 @@ void destroy_sailing_components(ecs_world_t *ecs) {
         ecs_filter(ecs, {
                             .terms =
                                 {
-                                    {.id = ecs_id(HullComponent)},
+                                    {.id = ecs_id(ThsHullComponent)},
                                 },
                         });
     ecs_iter_t it = ecs_filter_iter(ecs, filter);
     while (ecs_filter_next(&it)) {
-      HullComponent *comp = ecs_field(&it, HullComponent, 1);
+      ThsHullComponent *comp = ecs_field(&it, ThsHullComponent, 1);
       for (int32_t i = 0; i < it.count; ++i) {
-        *comp = (HullComponent){0};
+        *comp = (ThsHullComponent){0};
       }
     }
     ecs_filter_fini(filter);
@@ -132,14 +132,14 @@ void destroy_sailing_components(ecs_world_t *ecs) {
         ecs_filter(ecs, {
                             .terms =
                                 {
-                                    {.id = ecs_id(BoatCameraComponent)},
+                                    {.id = ecs_id(TbBoatCameraComponent)},
                                 },
                         });
     ecs_iter_t it = ecs_filter_iter(ecs, filter);
     while (ecs_filter_next(&it)) {
-      BoatCameraComponent *comp = ecs_field(&it, BoatCameraComponent, 1);
+      TbBoatCameraComponent *comp = ecs_field(&it, TbBoatCameraComponent, 1);
       for (int32_t i = 0; i < it.count; ++i) {
-        *comp = (BoatCameraComponent){0};
+        *comp = (TbBoatCameraComponent){0};
       }
     }
     ecs_filter_fini(filter);
@@ -148,13 +148,13 @@ void destroy_sailing_components(ecs_world_t *ecs) {
 
 void ths_register_sailing_components(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, AssetSystem);
-  ECS_COMPONENT(ecs, BoatMovementSystem);
+  ECS_COMPONENT(ecs, TbAssetSystem);
+  ECS_COMPONENT(ecs, ThsBoatMovementSystem);
 
   // Register asset system for parsing sailing components
-  AssetSystem asset = {
+  TbAssetSystem asset = {
       .add_fn = create_sailing_components,
       .rem_fn = destroy_sailing_components,
   };
-  ecs_set_ptr(ecs, ecs_id(BoatMovementSystem), AssetSystem, &asset);
+  ecs_set_ptr(ecs, ecs_id(ThsBoatMovementSystem), TbAssetSystem, &asset);
 }

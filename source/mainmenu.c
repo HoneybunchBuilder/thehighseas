@@ -15,18 +15,18 @@ TbWorld *mm_world = NULL;
 
 void main_menu_tick(ecs_iter_t *it) {
   ecs_world_t *ecs = it->world;
-  ECS_COMPONENT(ecs, GameSceneSettings);
-  ECS_COMPONENT(ecs, ImGuiSystem);
+  ECS_COMPONENT(ecs, ThsGameSceneSettings);
+  ECS_COMPONENT(ecs, TbImGuiSystem);
 
-  GameSceneSettings *gss = ecs_field(it, GameSceneSettings, 1);
+  ThsGameSceneSettings *gss = ecs_field(it, ThsGameSceneSettings, 1);
   TB_CHECK(it->count <= 1, "More game state objects than expected");
   // Do nothing if we're not in the main menu
   if (it->count == 0 || gss->type != THS_GS_MAIN_MENU) {
-    ecs_enable_id(ecs, it->entities[0], ecs_id(GameSceneSettings), false);
+    ecs_enable_id(ecs, it->entities[0], ecs_id(ThsGameSceneSettings), false);
     return;
   }
 
-  ImGuiSystem *ui = ecs_singleton_get_mut(ecs, ImGuiSystem);
+  TbImGuiSystem *ui = ecs_singleton_get_mut(ecs, TbImGuiSystem);
   TB_CHECK(ui, "Unexpectedly missing UI system");
 
   if (ui->context_count == 0) {
@@ -97,7 +97,7 @@ void ths_register_main_menu_sys(TbWorld *world) {
   mm_world = world;
 
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, GameSceneSettings);
+  ECS_COMPONENT(ecs, ThsGameSceneSettings);
 
   ths_register_game_state_components(world);
 
@@ -108,7 +108,7 @@ void ths_register_main_menu_sys(TbWorld *world) {
                                           .add = {ecs_dependson(EcsOnUpdate)}}),
                .query.filter.terms =
                    {
-                       {.id = ecs_id(GameSceneSettings)},
+                       {.id = ecs_id(ThsGameSceneSettings)},
                    },
                .callback = main_menu_tick,
                .no_readonly = true // disable readonly mode for this system

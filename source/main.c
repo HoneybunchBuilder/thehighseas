@@ -103,8 +103,8 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   }
 
   // Must create render thread on the heap like this
-  RenderThread *render_thread = tb_alloc_tp(std_alloc, RenderThread);
-  RenderThreadDescriptor render_thread_desc = {
+  TbRenderThread *render_thread = tb_alloc_tp(std_alloc, TbRenderThread);
+  TbRenderThreadDescriptor render_thread_desc = {
       .window = window,
   };
   TB_CHECK(tb_start_render_thread(&render_thread_desc, render_thread),
@@ -113,15 +113,17 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   // Do not go initializing anything until we know the render thread is ready
   tb_wait_thread_initialized(render_thread);
 
-  tb_auto create_world = ^(TbWorld* world, RenderThread* thread, SDL_Window* window){
-    tb_create_default_world(world, thread, window);
-    // Attach game specifc systems to the world
-    ths_register_boat_movement_sys(world);
-    ths_register_boat_camera_sys(world);
-    ths_register_main_menu_sys(world);
-  };
+  tb_auto create_world =
+      ^(TbWorld *world, TbRenderThread *thread, SDL_Window *window) {
+        tb_create_default_world(world, thread, window);
+        // Attach game specifc systems to the world
+        ths_register_boat_movement_sys(world);
+        ths_register_boat_camera_sys(world);
+        ths_register_main_menu_sys(world);
+      };
 
-  TbWorld world = tb_create_world(std_alloc, tmp_alloc, create_world, render_thread, window);
+  TbWorld world = tb_create_world(std_alloc, tmp_alloc, create_world,
+                                  render_thread, window);
 
   // Load first scene
   tb_load_scene(&world, "scenes/mainmenu.glb");

@@ -19,30 +19,32 @@ void boat_movement_update_tick(ecs_iter_t *it) {
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
   ecs_world_t *ecs = it->world;
-  ECS_COMPONENT(ecs, BoatMovementSystem);
-  ECS_COMPONENT(ecs, VisualLoggingSystem);
-  ECS_COMPONENT(ecs, InputSystem);
-  ECS_COMPONENT(ecs, OceanComponent);
-  ECS_COMPONENT(ecs, TransformComponent);
+  ECS_COMPONENT(ecs, ThsBoatMovementSystem);
+  ECS_COMPONENT(ecs, TbVisualLoggingSystem);
+  ECS_COMPONENT(ecs, TbInputSystem);
+  ECS_COMPONENT(ecs, TbOceanComponent);
+  ECS_COMPONENT(ecs, TbTransformComponent);
 
-  const BoatMovementSystem *sys = ecs_singleton_get(ecs, BoatMovementSystem);
-  VisualLoggingSystem *vlog = ecs_singleton_get_mut(ecs, VisualLoggingSystem);
-  const InputSystem *input = ecs_singleton_get(ecs, InputSystem);
+  const ThsBoatMovementSystem *sys =
+      ecs_singleton_get(ecs, ThsBoatMovementSystem);
+  TbVisualLoggingSystem *vlog =
+      ecs_singleton_get_mut(ecs, TbVisualLoggingSystem);
+  const TbInputSystem *input = ecs_singleton_get(ecs, TbInputSystem);
 
-  ecs_singleton_modified(ecs, VisualLoggingSystem);
+  ecs_singleton_modified(ecs, TbVisualLoggingSystem);
 
   // Find oceans
   // For now we assume only one
-  OceanComponent *ocean = NULL;
-  TransformComponent *ocean_transform = NULL;
+  TbOceanComponent *ocean = NULL;
+  TbTransformComponent *ocean_transform = NULL;
   {
     ecs_iter_t ocean_it = ecs_query_iter(ecs, sys->ocean_query);
     int32_t ocean_count = 0;
     while (ecs_iter_next(&ocean_it)) {
 
       if (ocean_count == 0 && ocean_it.count == 1) {
-        ocean = ecs_field(&ocean_it, OceanComponent, 1);
-        ocean_transform = ecs_field(&ocean_it, TransformComponent, 2);
+        ocean = ecs_field(&ocean_it, TbOceanComponent, 1);
+        ocean_transform = ecs_field(&ocean_it, TbTransformComponent, 2);
       }
 
       ocean_count += ocean_it.count;
@@ -50,14 +52,14 @@ void boat_movement_update_tick(ecs_iter_t *it) {
     TB_CHECK(ocean_count == 1, "Not expecting more than one ocean");
   }
 
-  TransformComponent *transforms = ecs_field(it, TransformComponent, 1);
-  HullComponent *hulls = ecs_field(it, HullComponent, 2);
+  TbTransformComponent *transforms = ecs_field(it, TbTransformComponent, 1);
+  ThsHullComponent *hulls = ecs_field(it, ThsHullComponent, 2);
 
   for (int32_t i = 0; i < it->count; ++i) {
-    TransformComponent *transform = &transforms[i];
-    HullComponent *hull = &hulls[i];
+    TbTransformComponent *transform = &transforms[i];
+    ThsHullComponent *hull = &hulls[i];
 
-    TransformComponent *boat_transform =
+    TbTransformComponent *boat_transform =
         tb_transform_get_parent_mut(ecs, transform);
 
     float3 hull_pos = boat_transform->transform.position;
@@ -79,10 +81,11 @@ void boat_movement_update_tick(ecs_iter_t *it) {
     float half_width = hull->width * 0.5f;
     float half_depth = hull->depth * 0.5f;
 
-    Quaternion boat_rot = boat_transform->transform.rotation;
+    TbQuaternion boat_rot = boat_transform->transform.rotation;
     float3 forward =
-        qrotf3(boat_rot, transform_get_forward(&transform->transform));
-    float3 right = qrotf3(boat_rot, transform_get_right(&transform->transform));
+        tb_qrotf3(boat_rot, tb_transform_get_forward(&transform->transform));
+    float3 right =
+        tb_qrotf3(boat_rot, tb_transform_get_right(&transform->transform));
 
     const float3 sample_points[SAMPLE_COUNT] = {
         hull_pos,
@@ -92,13 +95,13 @@ void boat_movement_update_tick(ecs_iter_t *it) {
         hull_pos - (right * half_width) - (forward * half_depth), // left stern
         hull_pos + (right * half_width) - (forward * half_depth), // right stern
     };
-    OceanSample average_sample = {.pos = {0}};
+    TbOceanSample average_sample = {.pos = {0}};
     for (uint32_t i = 0; i < SAMPLE_COUNT; ++i) {
       const float3 point = sample_points[i];
-      tb_vlog_location(vlog, f3(point.x, 10.0f, point.z), 0.4f,
-                       normf3(f3(point.x, 0, point.z)));
+      tb_vlog_location(vlog, tb_f3(point.x, 10.0f, point.z), 0.4f,
+                       tb_normf3(tb_f3(point.x, 0, point.z)));
 
-      OceanSample sample =
+      TbOceanSample sample =
           tb_sample_ocean(ocean, ecs, ocean_transform, point.xz);
       average_sample.pos += sample.pos;
       average_sample.tangent += sample.tangent;
@@ -106,21 +109,22 @@ void boat_movement_update_tick(ecs_iter_t *it) {
     }
     average_sample.pos /= SAMPLE_COUNT;
     average_sample.tangent /= SAMPLE_COUNT;
-    average_sample.tangent = normf3(average_sample.tangent);
+    average_sample.tangent = tb_normf3(average_sample.tangent);
     average_sample.binormal /= SAMPLE_COUNT;
-    average_sample.binormal = normf3(average_sample.binormal);
+    average_sample.binormal = tb_normf3(average_sample.binormal);
 
     transform->transform.position[1] =
-        lerpf(average_sample.pos[1], transform->transform.position[1],
-              clampf(it->delta_time, 0.0f, 1.0f));
+        tb_lerpf(average_sample.pos[1], transform->transform.position[1],
+                 tb_clampf(it->delta_time, 0.0f, 1.0f));
 
     float3 normal =
-        normf3(crossf3(average_sample.tangent, average_sample.binormal));
-    Quaternion rot = mf33_to_quat(
-        m44tom33(look_at((float3){0}, average_sample.binormal, normal)));
+        tb_normf3(tb_crossf3(average_sample.tangent, average_sample.binormal));
+    TbQuaternion rot =
+        tb_look_at_quat((float3){0}, average_sample.binormal, normal);
 
-    transform->transform.rotation = slerp(transform->transform.rotation, rot,
-                                          clampf(it->delta_time, 0.0f, 1.0f));
+    transform->transform.rotation =
+        tb_slerp(transform->transform.rotation, rot,
+                 tb_clampf(it->delta_time, 0.0f, 1.0f));
 #undef SAMPLE_COUNT
 
     // Modify boat rotation based on input
@@ -141,7 +145,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
         if (a > -deadzone && a < deadzone) {
           a = 0.0f;
         }
-        rotation_alpha = clampf(a, -1.0f, 1.0f);
+        rotation_alpha = tb_clampf(a, -1.0f, 1.0f);
         if (rotation_alpha != 0.0f) {
           rotating = true;
         }
@@ -166,9 +170,9 @@ void boat_movement_update_tick(ecs_iter_t *it) {
       }
 
       boat_transform->transform.rotation =
-          mulq(boat_transform->transform.rotation,
-               angle_axis_to_quat(
-                   (float4){0, 1, 0, hull->heading_velocity * it->delta_time}));
+          tb_mulq(boat_transform->transform.rotation,
+                  tb_angle_axis_to_quat((float4){
+                      0, 1, 0, hull->heading_velocity * it->delta_time}));
       tb_transform_mark_dirty(ecs, boat_transform);
     }
 
@@ -176,15 +180,15 @@ void boat_movement_update_tick(ecs_iter_t *it) {
     {
       // Project forward onto the XZ plane to get the forward we want to use
       // for movement
-      float3 mov_forward = transform_get_forward(&boat_transform->transform);
-      mov_forward = normf3((float3){mov_forward.x, 0.0f, mov_forward.z});
+      float3 mov_forward = tb_transform_get_forward(&boat_transform->transform);
+      mov_forward = tb_normf3((float3){mov_forward.x, 0.0f, mov_forward.z});
 
       float movement_axis = 0.0f;
       if (input->keyboard.key_W > 0) {
         movement_axis = 1.0f;
       } else if (input->controller_count > 0) {
-        const TBGameControllerState *state = &input->controller_states[0];
-        movement_axis = clampf(state->left_trigger, -1.0f, 1.0f);
+        const TbGameControllerState *state = &input->controller_states[0];
+        movement_axis = tb_clampf(state->left_trigger, -1.0f, 1.0f);
       }
 
       if (movement_axis == 0) {
@@ -206,9 +210,9 @@ void boat_movement_update_tick(ecs_iter_t *it) {
       // TEMP
       hull->max_speed = 25.0f;
       float speed_sq = hull->max_speed * hull->max_speed;
-      if (magsqf3(velocity) > speed_sq) {
+      if (tb_magsqf3(velocity) > speed_sq) {
         hull->speed = hull->max_speed;
-        velocity = normf3(velocity) * hull->max_speed;
+        velocity = tb_normf3(velocity) * hull->max_speed;
       }
 
       boat_transform->transform.position += velocity * it->delta_time;
@@ -221,29 +225,30 @@ void boat_movement_update_tick(ecs_iter_t *it) {
 
 void ths_register_boat_movement_sys(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, BoatMovementSystem);
-  ECS_COMPONENT(ecs, TransformComponent);
-  ECS_COMPONENT(ecs, OceanComponent);
-  ECS_COMPONENT(ecs, HullComponent);
+  ECS_COMPONENT(ecs, ThsBoatMovementSystem);
+  ECS_COMPONENT(ecs, TbTransformComponent);
+  ECS_COMPONENT(ecs, TbOceanComponent);
+  ECS_COMPONENT(ecs, ThsHullComponent);
 
-  BoatMovementSystem sys = {
+  ThsBoatMovementSystem sys = {
       .tmp_alloc = world->tmp_alloc,
       .ocean_query = ecs_query(ecs, {.filter.terms = {
-                                         {.id = ecs_id(OceanComponent)},
-                                         {.id = ecs_id(TransformComponent)},
+                                         {.id = ecs_id(TbOceanComponent)},
+                                         {.id = ecs_id(TbTransformComponent)},
                                      }})};
-  ecs_set_ptr(ecs, ecs_id(BoatMovementSystem), BoatMovementSystem, &sys);
+  ecs_set_ptr(ecs, ecs_id(ThsBoatMovementSystem), ThsBoatMovementSystem, &sys);
 
-  ECS_SYSTEM(ecs, boat_movement_update_tick, EcsOnUpdate, TransformComponent,
-             HullComponent)
+  ECS_SYSTEM(ecs, boat_movement_update_tick, EcsOnUpdate, TbTransformComponent,
+             ThsHullComponent)
 
   ths_register_sailing_components(world);
 }
 
 void ths_unregister_boat_movement_sys(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, BoatMovementSystem);
-  BoatMovementSystem *sys = ecs_singleton_get_mut(ecs, BoatMovementSystem);
+  ECS_COMPONENT(ecs, ThsBoatMovementSystem);
+  ThsBoatMovementSystem *sys =
+      ecs_singleton_get_mut(ecs, ThsBoatMovementSystem);
   ecs_query_fini(sys->ocean_query);
-  ecs_singleton_remove(ecs, BoatMovementSystem);
+  ecs_singleton_remove(ecs, ThsBoatMovementSystem);
 }

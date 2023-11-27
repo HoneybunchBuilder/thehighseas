@@ -16,7 +16,7 @@
 typedef struct TbWorld TbWorld;
 
 typedef struct MeshComponent MeshComponent;
-typedef struct TransformComponent TransformComponent;
+typedef struct TbTransformComponent TbTransformComponent;
 
 // Tracks the state of the wind
 // Currently this is intended to mostly be a single use global component
@@ -46,7 +46,7 @@ typedef struct BoatMovementComponent {
   float friction; // How fast the boat will come to a stop
 } BoatMovementComponent;
 
-typedef struct HullComponent {
+typedef struct ThsHullComponent {
   float bouyancy; // How fast the hull will lerp to the target height
   // Filled in via on_loaded
   float width;
@@ -56,14 +56,14 @@ typedef struct HullComponent {
   float speed;
 
   float heading_velocity; // how fast the heading changes
-} HullComponent;
+} ThsHullComponent;
 
 typedef struct MastComponent {
   float heading_change_speed; // How fast the mast will face the target heading
   float3 target_heading;      // Direction we want the mast to face
 } MastComponent;
 
-typedef struct BoatCameraComponent {
+typedef struct TbBoatCameraComponent {
   float min_dist;
   float max_dist;
   float move_speed;
@@ -72,6 +72,6 @@ typedef struct BoatCameraComponent {
 
   float target_dist;
   float3 target_hull_to_camera;
-} BoatCameraComponent;
+} TbBoatCameraComponent;
 
 void ths_register_sailing_components(TbWorld *world);

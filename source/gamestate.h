@@ -6,9 +6,9 @@ typedef enum GameSceneType {
   THS_GS_GAME_WORLD,
 } GameSceneType;
 
-typedef struct GameSceneSettings {
+typedef struct ThsGameSceneSettings {
   GameSceneType type;
-} GameSceneSettings;
+} ThsGameSceneSettings;
 
 typedef struct TbWorld TbWorld;
 

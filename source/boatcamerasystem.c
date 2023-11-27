@@ -33,17 +33,13 @@ void boat_camera_update_tick(ecs_iter_t *it) {
         tb_transform_get_parent(ecs, transform_comp);
     float3 hull_pos = hull_transform_comp->transform.position;
 
-    boat_cam->target_center = hull_pos;
-
     // A target distance of 0 makes no sense; interpret as initialization
     // and set a variety of parameters to whatever is stored on the transform
     float target_dist = boat_cam->target_dist;
-    float3 target_center = boat_cam->target_center;
     float3 hull_to_camera = boat_cam->target_hull_to_camera;
 
     bool init = target_dist == 0.0f;
     if (init) {
-      target_center = hull_pos;
       hull_to_camera = normf3(transform_comp->transform.position - hull_pos);
     }
 
@@ -61,13 +57,13 @@ void boat_camera_update_tick(ecs_iter_t *it) {
 
     // Arcball the camera around the boat
     {
-
+      float look_speed = 5.0f;
       float look_yaw = 0.0f;
       float look_pitch = 0.0f;
       if (input->mouse.left || input->mouse.right || input->mouse.middle) {
         float2 look_axis = input->mouse.axis;
-        look_yaw = look_axis.x * it->delta_time * 5;
-        look_pitch = look_axis.y * it->delta_time * 5;
+        look_yaw = look_axis.x * it->delta_time * look_speed;
+        look_pitch = look_axis.y * it->delta_time * look_speed;
       } else if (input->controller_count > 0) {
         const TBGameControllerState *ctl_state = &input->controller_states[0];
         float2 look_axis = ctl_state->right_stick;
@@ -90,15 +86,14 @@ void boat_camera_update_tick(ecs_iter_t *it) {
     }
 
     boat_cam->target_dist = target_dist;
-    boat_cam->target_center = target_center;
     boat_cam->target_hull_to_camera = hull_to_camera;
 
-    transform_comp->transform.position =
-        target_center + (hull_to_camera * target_dist);
+    float3 camera_pos = (hull_to_camera * target_dist);
 
     // Make sure the camera looks at the hull
-    transform_comp->transform.rotation = mf33_to_quat(
-        m44tom33(look_at(transform_comp->transform.position, hull_pos, TB_UP)));
+    transform_comp->transform =
+        look_forward_transform(camera_pos, -hull_to_camera, TB_UP);
+    tb_transform_mark_dirty(ecs, transform_comp);
   }
 
   TracyCZoneEnd(ctx);

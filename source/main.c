@@ -62,21 +62,21 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   }
 
   // Create Temporary Arena Allocator
-  ArenaAllocator arena = {0};
+  TbArenaAllocator arena = {0};
   {
     SDL_Log("%s", "Creating Arena Allocator");
     const size_t arena_alloc_size = 1024 * 1024 * 512; // 512 MB
-    create_arena_allocator("Main Arena", &arena, arena_alloc_size);
+    tb_create_arena_alloc("Main Arena", &arena, arena_alloc_size);
   }
 
-  StandardAllocator gp_alloc = {0};
+  TbGeneralAllocator gp_alloc = {0};
   {
-    SDL_Log("%s", "Creating Standard Allocator");
-    create_standard_allocator(&gp_alloc, "std_alloc");
+    SDL_Log("%s", "Creating General Allocator");
+    tb_create_gen_alloc(&gp_alloc, "std_alloc");
   }
 
-  Allocator std_alloc = gp_alloc.alloc;
-  Allocator tmp_alloc = arena.alloc;
+  TbAllocator std_alloc = gp_alloc.alloc;
+  TbAllocator tmp_alloc = arena.alloc;
 
   {
     int32_t res = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER |
@@ -92,8 +92,8 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   }
 
   SDL_Window *window = SDL_CreateWindow(
-      "The High Seas", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280,
-      800, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+      "The High Seas", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920,
+      1080, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
   if (window == NULL) {
     const char *msg = SDL_GetError();
     SDL_Log("Failed to open window with error: %s", msg);
@@ -113,11 +113,15 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   // Do not go initializing anything until we know the render thread is ready
   tb_wait_thread_initialized(render_thread);
 
-  TbWorld world = tb_create_world(std_alloc, tmp_alloc, render_thread, window);
-  // Attach game specifc systems to the world
-  ths_register_boat_movement_sys(&world);
-  ths_register_boat_camera_sys(&world);
-  ths_register_main_menu_sys(&world);
+  tb_auto create_world = ^(TbWorld* world, RenderThread* thread, SDL_Window* window){
+    tb_create_default_world(world, thread, window);
+    // Attach game specifc systems to the world
+    ths_register_boat_movement_sys(world);
+    ths_register_boat_camera_sys(world);
+    ths_register_main_menu_sys(world);
+  };
+
+  TbWorld world = tb_create_world(std_alloc, tmp_alloc, create_world, render_thread, window);
 
   // Load first scene
   tb_load_scene(&world, "scenes/mainmenu.glb");
@@ -152,7 +156,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
     }
 
     // Reset the arena allocator
-    arena = reset_arena(arena, true); // Just allow it to grow for now
+    arena = tb_reset_arena(arena, true); // Just allow it to grow for now
 
     TracyCZoneEnd(trcy_ctx);
     TracyCFrameMarkEnd("Simulation Frame");
@@ -179,8 +183,8 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
 
   SDL_Quit();
 
-  destroy_arena_allocator(arena);
-  destroy_standard_allocator(gp_alloc);
+  tb_destroy_arena_alloc(arena);
+  tb_destroy_gen_alloc(gp_alloc);
 
   return 0;
 }

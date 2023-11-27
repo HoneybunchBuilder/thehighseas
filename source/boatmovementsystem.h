@@ -8,7 +8,7 @@ typedef struct ecs_query_t ecs_query_t;
 #define BoatMovementSystemId 0xDEADF005
 
 typedef struct BoatMovementSystem {
-  Allocator tmp_alloc;
+  TbAllocator tmp_alloc;
   ecs_query_t *ocean_query;
 } BoatMovementSystem;
 

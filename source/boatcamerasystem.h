@@ -5,7 +5,7 @@
 typedef struct TbWorld TbWorld;
 
 typedef struct BoatCameraSystem {
-  Allocator tmp_alloc;
+  TbAllocator tmp_alloc;
 } BoatCameraSystem;
 
 void ths_register_boat_camera_sys(TbWorld *world);

@@ -1,19 +1,11 @@
-#include <mimalloc.h>
-
-#include "allocator.h"
-#include "config.h"
-#include "pi.h"
-#include "profiling.h"
-#include "settings.h"
-#include "shadercommon.h"
-#include "simd.h"
-#include "world.h"
-
 #include "tbcommon.h"
-#include "tbsdl.h"
 #include "tbvk.h"
 #include "tbvma.h"
 
+#include "config.h"
+#include "world.h"
+
+// Engine components
 #include "cameracomponent.h"
 #include "lightcomponent.h"
 #include "meshcomponent.h"
@@ -23,6 +15,7 @@
 #include "skycomponent.h"
 #include "transformcomponent.h"
 
+// Engine systems
 #include "audiosystem.h"
 #include "boatcamerasystem.h"
 #include "boatmovementsystem.h"
@@ -48,11 +41,12 @@
 
 #include "renderthread.h"
 
-int32_t SDL_main(int32_t argc, char *argv[]) {
+#include <SDL3/SDL_main.h>
+
+int32_t main(int32_t argc, char *argv[]) {
   (void)argc;
   (void)argv;
 
-  SDL_Log("%s", "Entered SDL_main");
   {
     const char *app_info = TB_APP_INFO_STR;
     size_t app_info_len = strlen(app_info);
@@ -79,8 +73,8 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   TbAllocator tmp_alloc = arena.alloc;
 
   {
-    int32_t res = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER |
-                           SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC);
+    int32_t res = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMEPAD |
+                           SDL_INIT_HAPTIC);
     if (res != 0) {
       const char *msg = SDL_GetError();
       SDL_Log("Failed to initialize SDL with error: %s", msg);
@@ -92,8 +86,7 @@ int32_t SDL_main(int32_t argc, char *argv[]) {
   }
 
   SDL_Window *window = SDL_CreateWindow(
-      "The High Seas", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1920,
-      1080, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+      "The High Seas", 1920, 1080, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
   if (window == NULL) {
     const char *msg = SDL_GetError();
     SDL_Log("Failed to open window with error: %s", msg);

@@ -5,9 +5,6 @@
     "*.hlsli": "c",
     "*.hlsl.cs": "c",
     "*.hlsl.m": "c",
-    "cameracomponent.h": "c",
-    "meshcomponent.h": "c",
-    "physicssystem.h": "c"
   },
   "cmake.configureOnOpen": false,
   "cmake.useCMakePresets": "auto",

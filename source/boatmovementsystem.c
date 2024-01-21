@@ -10,7 +10,7 @@
 #include "visualloggingsystem.h"
 #include "world.h"
 
-#include <SDL2/SDL_log.h>
+#include <SDL3/SDL_log.h>
 
 #include <flecs.h>
 
@@ -25,18 +25,16 @@ void boat_movement_update_tick(ecs_iter_t *it) {
   ECS_COMPONENT(ecs, TbOceanComponent);
   ECS_COMPONENT(ecs, TbTransformComponent);
 
-  const ThsBoatMovementSystem *sys =
-      ecs_singleton_get(ecs, ThsBoatMovementSystem);
-  TbVisualLoggingSystem *vlog =
-      ecs_singleton_get_mut(ecs, TbVisualLoggingSystem);
-  const TbInputSystem *input = ecs_singleton_get(ecs, TbInputSystem);
+  const tb_auto *sys = ecs_singleton_get(ecs, ThsBoatMovementSystem);
+  tb_auto *vlog = ecs_singleton_get_mut(ecs, TbVisualLoggingSystem);
+  const tb_auto *input = ecs_singleton_get(ecs, TbInputSystem);
 
   ecs_singleton_modified(ecs, TbVisualLoggingSystem);
 
   // Find oceans
   // For now we assume only one
   TbOceanComponent *ocean = NULL;
-  TbTransformComponent *ocean_transform = NULL;
+  ecs_entity_t ocean_ent = 0;
   {
     ecs_iter_t ocean_it = ecs_query_iter(ecs, sys->ocean_query);
     int32_t ocean_count = 0;
@@ -44,7 +42,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
 
       if (ocean_count == 0 && ocean_it.count == 1) {
         ocean = ecs_field(&ocean_it, TbOceanComponent, 1);
-        ocean_transform = ecs_field(&ocean_it, TbTransformComponent, 2);
+        ocean_ent = ocean_it.entities[0];
       }
 
       ocean_count += ocean_it.count;
@@ -52,15 +50,15 @@ void boat_movement_update_tick(ecs_iter_t *it) {
     TB_CHECK(ocean_count == 1, "Not expecting more than one ocean");
   }
 
-  TbTransformComponent *transforms = ecs_field(it, TbTransformComponent, 1);
-  ThsHullComponent *hulls = ecs_field(it, ThsHullComponent, 2);
+  tb_auto *transforms = ecs_field(it, TbTransformComponent, 1);
+  tb_auto *hulls = ecs_field(it, ThsHullComponent, 2);
 
   for (int32_t i = 0; i < it->count; ++i) {
-    TbTransformComponent *transform = &transforms[i];
-    ThsHullComponent *hull = &hulls[i];
+    tb_auto *transform = &transforms[i];
+    tb_auto *hull = &hulls[i];
 
-    TbTransformComponent *boat_transform =
-        tb_transform_get_parent_mut(ecs, transform);
+    tb_auto boat = ecs_get_parent(ecs, it->entities[i]);
+    tb_auto boat_transform = ecs_get_mut(ecs, boat, TbTransformComponent);
 
     float3 hull_pos = boat_transform->transform.position;
 
@@ -101,8 +99,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
       tb_vlog_location(vlog, tb_f3(point.x, 10.0f, point.z), 0.4f,
                        tb_normf3(tb_f3(point.x, 0, point.z)));
 
-      TbOceanSample sample =
-          tb_sample_ocean(ocean, ecs, ocean_transform, point.xz);
+      TbOceanSample sample = tb_sample_ocean(ocean, ecs, ocean_ent, point.xz);
       average_sample.pos += sample.pos;
       average_sample.tangent += sample.tangent;
       average_sample.binormal += sample.binormal;
@@ -173,7 +170,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
           tb_mulq(boat_transform->transform.rotation,
                   tb_angle_axis_to_quat((float4){
                       0, 1, 0, hull->heading_velocity * it->delta_time}));
-      tb_transform_mark_dirty(ecs, boat_transform);
+      tb_transform_mark_dirty(ecs, boat);
     }
 
     // Move boat forward based on angle compared to the wind direction
@@ -216,7 +213,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
       }
 
       boat_transform->transform.position += velocity * it->delta_time;
-      tb_transform_mark_dirty(ecs, boat_transform);
+      tb_transform_mark_dirty(ecs, boat);
     }
   }
 
@@ -234,7 +231,6 @@ void ths_register_boat_movement_sys(TbWorld *world) {
       .tmp_alloc = world->tmp_alloc,
       .ocean_query = ecs_query(ecs, {.filter.terms = {
                                          {.id = ecs_id(TbOceanComponent)},
-                                         {.id = ecs_id(TbTransformComponent)},
                                      }})};
   ecs_set_ptr(ecs, ecs_id(ThsBoatMovementSystem), ThsBoatMovementSystem, &sys);
 

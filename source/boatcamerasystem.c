@@ -2,43 +2,44 @@
 
 #include "cameracomponent.h"
 #include "inputsystem.h"
-#include "profiling.h"
-#include "sailingcomponents.h"
+#include "tbcommon.h"
 #include "transformcomponent.h"
 #include "world.h"
 
-#include <SDL2/SDL_log.h>
+#include "sailingcomponents.h"
 
+#include <SDL3/SDL_log.h>
 #include <flecs.h>
 
 void boat_camera_update_tick(ecs_iter_t *it) {
   TracyCZoneN(ctx, "Boat Camera Update System", true);
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
-  ecs_world_t *ecs = it->world;
+  tb_auto *ecs = it->world;
   ECS_COMPONENT(ecs, TbInputSystem);
 
-  const TbInputSystem *input = ecs_singleton_get(ecs, TbInputSystem);
+  const tb_auto *input = ecs_singleton_get(ecs, TbInputSystem);
 
-  TbTransformComponent *transforms = ecs_field(it, TbTransformComponent, 1);
-  TbBoatCameraComponent *boat_cameras = ecs_field(it, TbBoatCameraComponent, 2);
+  tb_auto *transforms = ecs_field(it, TbTransformComponent, 1);
+  tb_auto *boat_cameras = ecs_field(it, TbBoatCameraComponent, 2);
 
   for (int32_t i = 0; i < it->count; ++i) {
     // Get parent transform to determine where the parent boat hull is that we
     // want to focus on
-    TbTransformComponent *transform_comp = &transforms[i];
-    TbBoatCameraComponent *boat_cam = &boat_cameras[i];
+    tb_auto entity = it->entities[i];
+    tb_auto *transform_comp = &transforms[i];
+    tb_auto *boat_cam = &boat_cameras[i];
 
-    const TbTransformComponent *hull_transform_comp =
-        tb_transform_get_parent(ecs, transform_comp);
-    float3 hull_pos = hull_transform_comp->transform.position;
+    tb_auto hull = ecs_get_parent(ecs, entity);
+    tb_auto hull_transform = ecs_get_mut(ecs, hull, TbTransformComponent);
+    tb_auto hull_pos = hull_transform->transform.position;
 
     // A target distance of 0 makes no sense; interpret as initialization
     // and set a variety of parameters to whatever is stored on the transform
-    float target_dist = boat_cam->target_dist;
-    float3 hull_to_camera = boat_cam->target_hull_to_camera;
+    tb_auto target_dist = boat_cam->target_dist;
+    tb_auto hull_to_camera = boat_cam->target_hull_to_camera;
 
-    bool init = target_dist == 0.0f;
+    bool init = (target_dist == 0.0f);
     if (init) {
       hull_to_camera = tb_normf3(transform_comp->transform.position - hull_pos);
     }
@@ -79,12 +80,10 @@ void boat_camera_update_tick(ecs_iter_t *it) {
         look_pitch = look_axis.y * it->delta_time;
       }
 
-      TbQuaternion yaw_quat =
-          tb_angle_axis_to_quat((float4){0, 1, 0, look_yaw});
+      tb_auto yaw_quat = tb_angle_axis_to_quat((float4){0, 1, 0, look_yaw});
       hull_to_camera = tb_normf3(tb_qrotf3(yaw_quat, hull_to_camera));
-      float3 right = tb_normf3(tb_crossf3(TB_UP, hull_to_camera));
-      TbQuaternion pitch_quat =
-          tb_angle_axis_to_quat(tb_f3tof4(right, look_pitch));
+      tb_auto right = tb_normf3(tb_crossf3(TB_UP, hull_to_camera));
+      tb_auto pitch_quat = tb_angle_axis_to_quat(tb_f3tof4(right, look_pitch));
       hull_to_camera = tb_normf3(tb_qrotf3(pitch_quat, hull_to_camera));
     }
 
@@ -96,7 +95,7 @@ void boat_camera_update_tick(ecs_iter_t *it) {
     // Make sure the camera looks at the hull
     transform_comp->transform =
         tb_look_forward_transform(camera_pos, -hull_to_camera, TB_UP);
-    tb_transform_mark_dirty(ecs, transform_comp);
+    tb_transform_mark_dirty(ecs, entity);
   }
 
   TracyCZoneEnd(ctx);

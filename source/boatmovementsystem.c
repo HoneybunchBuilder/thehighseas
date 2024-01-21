@@ -136,8 +136,8 @@ void boat_movement_update_tick(ecs_iter_t *it) {
         rotation_alpha = -1.0f;
         rotating = true;
       }
-      if (!rotating && input->controller_count > 0) {
-        float a = -input->controller_states[0].left_stick.x;
+      if (!rotating && input->gamepad_count > 0) {
+        float a = -input->gamepad_states[0].left_stick.x;
         float deadzone = 0.15f;
         if (a > -deadzone && a < deadzone) {
           a = 0.0f;
@@ -183,8 +183,8 @@ void boat_movement_update_tick(ecs_iter_t *it) {
       float movement_axis = 0.0f;
       if (input->keyboard.key_W > 0) {
         movement_axis = 1.0f;
-      } else if (input->controller_count > 0) {
-        const TbGameControllerState *state = &input->controller_states[0];
+      } else if (input->gamepad_count > 0) {
+        const TbGameControllerState *state = &input->gamepad_states[0];
         movement_axis = tb_clampf(state->left_trigger, -1.0f, 1.0f);
       }
 

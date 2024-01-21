@@ -66,8 +66,8 @@ void boat_camera_update_tick(ecs_iter_t *it) {
         float2 look_axis = input->mouse.axis;
         look_yaw = look_axis.x * it->delta_time * look_speed;
         look_pitch = look_axis.y * it->delta_time * look_speed;
-      } else if (input->controller_count > 0) {
-        const TbGameControllerState *ctl_state = &input->controller_states[0];
+      } else if (input->gamepad_count > 0) {
+        const TbGameControllerState *ctl_state = &input->gamepad_states[0];
         float2 look_axis = ctl_state->right_stick;
         float deadzone = 0.15f;
         if (look_axis.x > -deadzone && look_axis.x < deadzone) {

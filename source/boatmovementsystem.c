@@ -14,15 +14,17 @@
 
 #include <flecs.h>
 
+typedef struct ThsBoatMovementSystem {
+  ecs_query_t *ocean_query;
+} ThsBoatMovementSystem;
+ECS_COMPONENT_DECLARE(ThsBoatMovementSystem);
+
 void boat_movement_update_tick(ecs_iter_t *it) {
   TracyCZoneN(ctx, "Boat Movement System Tick", true);
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
   ecs_world_t *ecs = it->world;
-  ECS_COMPONENT(ecs, ThsBoatMovementSystem);
-  ECS_COMPONENT(ecs, TbVisualLoggingSystem);
   ECS_COMPONENT(ecs, TbInputSystem);
-  ECS_COMPONENT(ecs, TbOceanComponent);
   ECS_COMPONENT(ecs, TbTransformComponent);
 
   const tb_auto *sys = ecs_singleton_get(ecs, ThsBoatMovementSystem);
@@ -222,29 +224,29 @@ void boat_movement_update_tick(ecs_iter_t *it) {
 
 void ths_register_boat_movement_sys(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, ThsBoatMovementSystem);
-  ECS_COMPONENT(ecs, TbTransformComponent);
+  ECS_COMPONENT_DEFINE(ecs, ThsBoatMovementSystem);
   ECS_COMPONENT(ecs, TbOceanComponent);
   ECS_COMPONENT(ecs, ThsHullComponent);
 
   ThsBoatMovementSystem sys = {
-      .tmp_alloc = world->tmp_alloc,
-      .ocean_query = ecs_query(ecs, {.filter.terms = {
-                                         {.id = ecs_id(TbOceanComponent)},
-                                     }})};
+      .ocean_query = ecs_query(ecs, {.filter.terms =
+                                         {
+                                             {.id = ecs_id(TbOceanComponent)},
+                                         }}),
+  };
   ecs_set_ptr(ecs, ecs_id(ThsBoatMovementSystem), ThsBoatMovementSystem, &sys);
 
   ECS_SYSTEM(ecs, boat_movement_update_tick, EcsOnUpdate, TbTransformComponent,
-             ThsHullComponent)
+             ThsHullComponent);
 
   ths_register_sailing_components(world);
 }
 
 void ths_unregister_boat_movement_sys(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, ThsBoatMovementSystem);
-  ThsBoatMovementSystem *sys =
-      ecs_singleton_get_mut(ecs, ThsBoatMovementSystem);
+  tb_auto sys = ecs_singleton_get_mut(ecs, ThsBoatMovementSystem);
   ecs_query_fini(sys->ocean_query);
   ecs_singleton_remove(ecs, ThsBoatMovementSystem);
 }
+
+TB_REGISTER_SYS(ths, boat_movement, TB_SYSTEM_NORMAL)

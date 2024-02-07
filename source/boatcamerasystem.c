@@ -1,5 +1,3 @@
-#include "boatcamerasystem.h"
-
 #include "cameracomponent.h"
 #include "inputsystem.h"
 #include "tbcommon.h"
@@ -103,23 +101,15 @@ void boat_camera_update_tick(ecs_iter_t *it) {
 
 void ths_register_boat_camera_sys(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, BoatCameraSystem);
-  ECS_COMPONENT(ecs, TbTransformComponent);
   ECS_COMPONENT(ecs, TbBoatCameraComponent);
 
-  BoatCameraSystem sys = {
-      .tmp_alloc = world->tmp_alloc,
-  };
-  ecs_set_ptr(ecs, ecs_id(BoatCameraSystem), BoatCameraSystem, &sys);
-
   ECS_SYSTEM(ecs, boat_camera_update_tick, EcsOnUpdate, TbTransformComponent,
-             TbBoatCameraComponent)
+             TbBoatCameraComponent);
 }
 
 void ths_unregister_boat_camera_sys(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, BoatCameraSystem);
-  BoatCameraSystem *sys = ecs_singleton_get_mut(ecs, BoatCameraSystem);
-  *sys = (BoatCameraSystem){0};
-  ecs_singleton_remove(ecs, BoatCameraSystem);
+  (void)ecs;
 }
+
+TB_REGISTER_SYS(ths, boat_camera, TB_SYSTEM_NORMAL)

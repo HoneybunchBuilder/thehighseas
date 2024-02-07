@@ -119,3 +119,5 @@ void ths_unregister_main_menu_sys(TbWorld *world) {
   (void)world;
   mm_world = NULL;
 }
+
+TB_REGISTER_SYS(ths, main_menu, TB_SYSTEM_NORMAL)

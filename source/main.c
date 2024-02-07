@@ -1,45 +1,8 @@
+#include "config.h"
 #include "tbcommon.h"
 #include "tbvk.h"
 #include "tbvma.h"
-
-#include "config.h"
 #include "world.h"
-
-// Engine components
-#include "cameracomponent.h"
-#include "lightcomponent.h"
-#include "meshcomponent.h"
-#include "noclipcomponent.h"
-#include "oceancomponent.h"
-#include "sailingcomponents.h"
-#include "skycomponent.h"
-#include "transformcomponent.h"
-
-// Engine systems
-#include "audiosystem.h"
-#include "boatcamerasystem.h"
-#include "boatmovementsystem.h"
-#include "camerasystem.h"
-#include "coreuisystem.h"
-#include "imguisystem.h"
-#include "inputsystem.h"
-#include "mainmenu.h"
-#include "materialsystem.h"
-#include "meshsystem.h"
-#include "noclipcontrollersystem.h"
-#include "oceansystem.h"
-#include "renderobjectsystem.h"
-#include "renderpipelinesystem.h"
-#include "rendersystem.h"
-#include "rendertargetsystem.h"
-#include "shadowsystem.h"
-#include "skysystem.h"
-#include "texturesystem.h"
-#include "timeofdaysystem.h"
-#include "viewsystem.h"
-#include "visualloggingsystem.h"
-
-#include "renderthread.h"
 
 #include <SDL3/SDL_main.h>
 
@@ -49,7 +12,7 @@ int32_t main(int32_t argc, char *argv[]) {
 
   {
     const char *app_info = TB_APP_INFO_STR;
-    size_t app_info_len = strlen(app_info);
+    size_t app_info_len = SDL_strlen(app_info);
     TracyCAppInfo(app_info, app_info_len)(void) app_info_len;
 
     TracyCSetThreadName("Main Thread");
@@ -58,16 +21,12 @@ int32_t main(int32_t argc, char *argv[]) {
   // Create Temporary Arena Allocator
   TbArenaAllocator arena = {0};
   {
-    SDL_Log("%s", "Creating Arena Allocator");
     const size_t arena_alloc_size = 1024 * 1024 * 512; // 512 MB
     tb_create_arena_alloc("Main Arena", &arena, arena_alloc_size);
   }
 
   TbGeneralAllocator gp_alloc = {0};
-  {
-    SDL_Log("%s", "Creating General Allocator");
-    tb_create_gen_alloc(&gp_alloc, "std_alloc");
-  }
+  tb_create_gen_alloc(&gp_alloc, "gp_alloc");
 
   TbAllocator std_alloc = gp_alloc.alloc;
   TbAllocator tmp_alloc = arena.alloc;
@@ -85,8 +44,10 @@ int32_t main(int32_t argc, char *argv[]) {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
   }
 
+  const char *app_name = "The High Seas";
+
   SDL_Window *window = SDL_CreateWindow(
-      "The High Seas", 1920, 1080, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+      app_name, 1920, 1080, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
   if (window == NULL) {
     const char *msg = SDL_GetError();
     SDL_Log("Failed to open window with error: %s", msg);
@@ -95,28 +56,19 @@ int32_t main(int32_t argc, char *argv[]) {
     return -1;
   }
 
-  // Must create render thread on the heap like this
-  TbRenderThread *render_thread = tb_alloc_tp(std_alloc, TbRenderThread);
-  TbRenderThreadDescriptor render_thread_desc = {
+  TbWorldDesc world_desc = {
+      .name = app_name,
+      .argc = argc,
+      .argv = argv,
+      .gp_alloc = std_alloc,
+      .tmp_alloc = tmp_alloc,
       .window = window,
   };
-  TB_CHECK(tb_start_render_thread(&render_thread_desc, render_thread),
-           "Failed to start render thread");
-
-  // Do not go initializing anything until we know the render thread is ready
-  tb_wait_thread_initialized(render_thread);
-
-  tb_auto create_world =
-      ^(TbWorld *world, TbRenderThread *thread, SDL_Window *window) {
-        tb_create_default_world(world, thread, window);
-        // Attach game specifc systems to the world
-        ths_register_boat_movement_sys(world);
-        ths_register_boat_camera_sys(world);
-        ths_register_main_menu_sys(world);
-      };
-
-  TbWorld world = tb_create_world(std_alloc, tmp_alloc, create_world,
-                                  render_thread, window);
+  TbWorld world = {0};
+  bool ok = tb_create_world(&world_desc, &world);
+  if (!ok) {
+    return 1;
+  }
 
   // Load first scene
   tb_load_scene(&world, "scenes/mainmenu.glb");
@@ -162,19 +114,7 @@ int32_t main(int32_t argc, char *argv[]) {
   // This doesn't quite work yet
   tb_clear_world(&world);
 
-  // Stop the render thread before we start destroying render objects
-  tb_stop_render_thread(render_thread);
-
-  ths_unregister_main_menu_sys(&world);
-  ths_unregister_boat_camera_sys(&world);
-  ths_unregister_boat_movement_sys(&world);
   tb_destroy_world(&world);
-
-  // Destroying the render thread will also close the window
-  tb_destroy_render_thread(render_thread);
-  tb_free(gp_alloc.alloc, render_thread);
-  render_thread = NULL;
-  window = NULL;
 
   SDL_Quit();
 

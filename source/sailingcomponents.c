@@ -149,7 +149,6 @@ void destroy_sailing_components(ecs_world_t *ecs) {
 void ths_register_sailing_components(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
   ECS_COMPONENT(ecs, TbAssetSystem);
-  ECS_COMPONENT(ecs, ThsBoatMovementSystem);
 
   // Register asset system for parsing sailing components
   TbAssetSystem asset = {

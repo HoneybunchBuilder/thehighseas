@@ -12,8 +12,11 @@
   ],
   "settings": {
     "files.associations": {
+      ".clang-tidy": "yaml",
       "*.rt": "hlsl",
       "*.hlsli": "cpp",
+      "world.h": "c",
+      "gamestate.h": "c"
     }
   }
 }

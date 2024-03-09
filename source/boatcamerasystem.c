@@ -4,7 +4,7 @@
 #include "transformcomponent.h"
 #include "world.h"
 
-#include "sailingcomponents.h"
+#include "boatcameracomponent.h"
 
 #include <SDL3/SDL_log.h>
 #include <flecs.h>
@@ -14,12 +14,11 @@ void boat_camera_update_tick(ecs_iter_t *it) {
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
   tb_auto *ecs = it->world;
-  ECS_COMPONENT(ecs, TbInputSystem);
 
   const tb_auto *input = ecs_singleton_get(ecs, TbInputSystem);
 
   tb_auto *transforms = ecs_field(it, TbTransformComponent, 1);
-  tb_auto *boat_cameras = ecs_field(it, TbBoatCameraComponent, 2);
+  tb_auto *boat_cameras = ecs_field(it, ThsBoatCameraComponent, 2);
 
   for (int32_t i = 0; i < it->count; ++i) {
     // Get parent transform to determine where the parent boat hull is that we
@@ -101,10 +100,10 @@ void boat_camera_update_tick(ecs_iter_t *it) {
 
 void ths_register_boat_camera_sys(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, TbBoatCameraComponent);
+  ECS_COMPONENT_DEFINE(ecs, ThsBoatCameraComponent);
 
   ECS_SYSTEM(ecs, boat_camera_update_tick, EcsOnUpdate, TbTransformComponent,
-             TbBoatCameraComponent);
+             ThsBoatCameraComponent);
 }
 
 void ths_unregister_boat_camera_sys(TbWorld *world) {

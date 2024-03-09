@@ -1,6 +1,5 @@
 #include "mainmenu.h"
 
-#include "gamestate.h"
 #include "imguisystem.h"
 #include "profiling.h"
 #include "tbcommon.h"
@@ -9,16 +8,16 @@
 
 #include <flecs.h>
 
+#include "gamestate.h"
+
 ECS_SYSTEM_DECLARE(main_menu_tick);
 
 TbWorld *mm_world = NULL;
 
 void main_menu_tick(ecs_iter_t *it) {
   ecs_world_t *ecs = it->world;
-  ECS_COMPONENT(ecs, ThsGameSceneSettings);
-  ECS_COMPONENT(ecs, TbImGuiSystem);
 
-  ThsGameSceneSettings *gss = ecs_field(it, ThsGameSceneSettings, 1);
+  tb_auto gss = ecs_field(it, ThsGameSceneSettings, 1);
   TB_CHECK(it->count <= 1, "More game state objects than expected");
   // Do nothing if we're not in the main menu
   if (it->count == 0 || gss->type != THS_GS_MAIN_MENU) {
@@ -97,10 +96,6 @@ void ths_register_main_menu_sys(TbWorld *world) {
   mm_world = world;
 
   ecs_world_t *ecs = world->ecs;
-  ECS_COMPONENT(ecs, ThsGameSceneSettings);
-
-  ths_register_game_state_components(world);
-
   ecs_system(
       ecs, {
                .entity = ecs_entity(ecs, {.id = ecs_id(main_menu_tick),

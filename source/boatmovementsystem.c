@@ -4,7 +4,6 @@
 #include "meshcomponent.h"
 #include "oceancomponent.h"
 #include "profiling.h"
-#include "sailingcomponents.h"
 #include "tbcommon.h"
 #include "transformcomponent.h"
 #include "visualloggingsystem.h"
@@ -13,6 +12,8 @@
 #include <SDL3/SDL_log.h>
 
 #include <flecs.h>
+
+#include "boatmovementcomponent.h"
 
 typedef struct ThsBoatMovementSystem {
   ecs_query_t *ocean_query;
@@ -24,8 +25,6 @@ void boat_movement_update_tick(ecs_iter_t *it) {
   TracyCZoneColor(ctx, TracyCategoryColorGame);
 
   ecs_world_t *ecs = it->world;
-  ECS_COMPONENT(ecs, TbInputSystem);
-  ECS_COMPONENT(ecs, TbTransformComponent);
 
   const tb_auto *sys = ecs_singleton_get(ecs, ThsBoatMovementSystem);
   tb_auto *vlog = ecs_singleton_get_mut(ecs, TbVisualLoggingSystem);
@@ -53,7 +52,7 @@ void boat_movement_update_tick(ecs_iter_t *it) {
   }
 
   tb_auto *transforms = ecs_field(it, TbTransformComponent, 1);
-  tb_auto *hulls = ecs_field(it, ThsHullComponent, 2);
+  tb_auto *hulls = ecs_field(it, ThsBoatMovementComponent, 2);
 
   for (int32_t i = 0; i < it->count; ++i) {
     tb_auto *transform = &transforms[i];
@@ -78,8 +77,8 @@ void boat_movement_update_tick(ecs_iter_t *it) {
     //         |
 
 #define SAMPLE_COUNT 6
-    float half_width = hull->width * 0.5f;
-    float half_depth = hull->depth * 0.5f;
+    float half_width = 1.0f; // hull->width * 0.5f;
+    float half_depth = 1.0f; // hull->depth * 0.5f;
 
     TbQuaternion boat_rot = boat_transform->transform.rotation;
     float3 forward =
@@ -153,25 +152,26 @@ void boat_movement_update_tick(ecs_iter_t *it) {
       const float accel_rate = 0.1f;
       if (rotating) {
         const float accel = accel_rate * rotation_alpha;
-        hull->heading_velocity += accel;
-      } else if (hull->heading_velocity != 0.0f) {
-        hull->heading_velocity -=
-            accel_rate * SDL_copysignf(1, hull->heading_velocity);
-        if (hull->heading_velocity > -0.01f && hull->heading_velocity < 0.01f) {
-          hull->heading_velocity = 0.0f;
+        hull->heading_change_speed += accel;
+      } else if (hull->heading_change_speed != 0.0f) {
+        hull->heading_change_speed -=
+            accel_rate * SDL_copysignf(1, hull->heading_change_speed);
+        if (hull->heading_change_speed > -0.01f &&
+            hull->heading_change_speed < 0.01f) {
+          hull->heading_change_speed = 0.0f;
         }
       }
 
       // Clamp rotational velocity
-      if (SDL_fabsf(hull->heading_velocity) > 1.0f) {
-        hull->heading_velocity =
-            1.0f * SDL_copysignf(1, hull->heading_velocity);
+      if (SDL_fabsf(hull->heading_change_speed) > 1.0f) {
+        hull->heading_change_speed =
+            1.0f * SDL_copysignf(1, hull->heading_change_speed);
       }
 
       boat_transform->transform.rotation =
           tb_mulq(boat_transform->transform.rotation,
                   tb_angle_axis_to_quat((float4){
-                      0, 1, 0, hull->heading_velocity * it->delta_time}));
+                      0, 1, 0, hull->heading_change_speed * it->delta_time}));
       tb_transform_mark_dirty(ecs, boat);
     }
 
@@ -225,8 +225,6 @@ void boat_movement_update_tick(ecs_iter_t *it) {
 void ths_register_boat_movement_sys(TbWorld *world) {
   ecs_world_t *ecs = world->ecs;
   ECS_COMPONENT_DEFINE(ecs, ThsBoatMovementSystem);
-  ECS_COMPONENT(ecs, TbOceanComponent);
-  ECS_COMPONENT(ecs, ThsHullComponent);
 
   ThsBoatMovementSystem sys = {
       .ocean_query = ecs_query(ecs, {.filter.terms =
@@ -237,9 +235,7 @@ void ths_register_boat_movement_sys(TbWorld *world) {
   ecs_set_ptr(ecs, ecs_id(ThsBoatMovementSystem), ThsBoatMovementSystem, &sys);
 
   ECS_SYSTEM(ecs, boat_movement_update_tick, EcsOnUpdate, TbTransformComponent,
-             ThsHullComponent);
-
-  ths_register_sailing_components(world);
+             ThsBoatMovementComponent);
 }
 
 void ths_unregister_boat_movement_sys(TbWorld *world) {

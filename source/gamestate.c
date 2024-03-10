@@ -45,6 +45,15 @@ ecs_entity_t ths_register_game_state_comp(TbWorld *world) {
   ECS_COMPONENT_DEFINE(ecs, ThsGameSceneDescriptor);
   ECS_COMPONENT_DEFINE(ecs, ThsGameSceneSettings);
 
+  ecs_struct(ecs,
+             {
+                 .entity = ecs_id(ThsGameSceneDescriptor),
+                 .members =
+                     {
+                         {.name = "scene_type", .type = ecs_id(ecs_string_t)},
+                     },
+             });
+
   return ecs_id(ThsGameSceneDescriptor);
 }
 
